@@ -1,3 +1,3 @@
 # onti_measures
 
-Ontology-based inconsistency measures for OWL ontologies
+Onti Measures is ontology-based inconsistency measures for OWL ontologies
