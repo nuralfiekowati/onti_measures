@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner.ReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -29,20 +30,27 @@ import org.semanticweb.owlapi.reasoner.TimeOutException;
 
 class IDmcs {
 
+	private static final Logger logger = Logger.getLogger(IDmcs.class);
+
 	static Set<OWLClass> ontologyClass = null;
 	static Set<OWLNamedIndividual> ontologyIndividual = null;
 	static Set<OWLObjectProperty> ontologyObjectProperty = null;
 
-	static OWLReasoner reasoner3, reasoner5;
+	static OWLReasoner reasoner3;
+	static OWLReasoner reasoner5;
 
-	static float cardOfSignInK, cardOfSignAxiomMIKUnion;
+	static float cardOfSignInK;
+	static float cardOfSignAxiomMIKUnion;
 	static int cardOfMCSesSign;
 
-	public static void IDmcs_measure(HashSet<OWLClass> MIKClassSet, HashSet<OWLNamedIndividual> MIKIndividualSet,
-			HashSet<OWLObjectProperty> MIKObjectPropertySet, HashSet<OWLAxiom> ontologyAxiomSet,
-			ReasonerFactory hermitRf3, OWLReasonerFactory jFactRf3, ReasonerFactory hermitRf5,
-			OWLReasonerFactory jFactRf5, Configuration configurationHermit,
-			OWLReasonerConfiguration configurationJFact) {
+	private IDmcs() {
+		throw new IllegalStateException("IDmcs");
+	}
+
+	public static void idMcsMeasure(Set<OWLClass> mikClassSet, Set<OWLNamedIndividual> mikIndividualSet,
+			Set<OWLObjectProperty> mikObjectPropertySet, Set<OWLAxiom> ontologyAxiomSet, ReasonerFactory hermitRf3,
+			OWLReasonerFactory jFactRf3, ReasonerFactory hermitRf5, OWLReasonerFactory jFactRf5,
+			Configuration configurationHermit, OWLReasonerConfiguration configurationJFact) {
 
 		long startTime = System.currentTimeMillis();
 
@@ -52,39 +60,40 @@ class IDmcs {
 			PrintStream ps = new PrintStream(fos);
 			System.setOut(ps);
 
-			OWLOntologyManager manager3 = OWLManager.createOWLOntologyManager();
-			OWLOntology axiomOntology3 = manager3.createOntology();
+			OWLOntologyManager manager3 = null;
+			OWLOntology axiomOntology3 = null;
 
 			AddAxiom addAxiom3;
 			Set<OWLAxiom> axiomsToRemove3;
 
-			OWLOntologyManager manager5 = OWLManager.createOWLOntologyManager();
-			OWLOntology axiomOntology5 = manager3.createOntology();
+			OWLOntologyManager manager5 = null;
+			OWLOntology axiomOntology5 = null;
 
 			AddAxiom addAxiom5;
 			Set<OWLAxiom> axiomsToRemove5;
-			Set<Set<OWLAxiom>> MCSes = new HashSet<Set<OWLAxiom>>();
+			Set<Set<OWLAxiom>> mcses = new HashSet<>();
 
 			for (OWLAxiom theAxiom : ontologyAxiomSet) {
-				ontologyClass = (Set<OWLClass>) theAxiom.getClassesInSignature();
-				ontologyIndividual = (Set<OWLNamedIndividual>) theAxiom.getIndividualsInSignature();
-				ontologyObjectProperty = (Set<OWLObjectProperty>) theAxiom.getObjectPropertiesInSignature();
+				ontologyClass = theAxiom.getClassesInSignature();
+				ontologyIndividual = theAxiom.getIndividualsInSignature();
+				ontologyObjectProperty = theAxiom.getObjectPropertiesInSignature();
 
 				for (OWLClass theClass2 : ontologyClass) {
-					MIKClassSet.add(theClass2);
+					mikClassSet.add(theClass2);
 				}
 				for (OWLNamedIndividual theIndividual2 : ontologyIndividual) {
-					MIKIndividualSet.add(theIndividual2);
+					mikIndividualSet.add(theIndividual2);
 				}
 				for (OWLObjectProperty theObjectProperty2 : ontologyObjectProperty) {
 
-					MIKObjectPropertySet.add(theObjectProperty2);
+					mikObjectPropertySet.add(theObjectProperty2);
 				}
 			}
 
-			float cardOfSignInK = MIKClassSet.size() + MIKIndividualSet.size() + MIKObjectPropertySet.size();
+			int cardOfSignInK = mikClassSet.size() + mikIndividualSet.size() + mikObjectPropertySet.size();
+			float cardOfSignInKFloat = (float) cardOfSignInK;
 			System.out.println("Cardinality of signatures in axiom union: " + cardOfSignAxiomMIKUnion);
-			System.out.println("Cardinality of signatures in K: " + cardOfSignInK);
+			System.out.println("Cardinality of signatures in K: " + cardOfSignInKFloat);
 
 			for (Set<OWLAxiom> subsetM : PowerSetCount.powerSet(ontologyAxiomSet)) {
 
@@ -141,7 +150,7 @@ class IDmcs {
 					configurationHermit.throwInconsistentOntologyException = false;
 				}
 
-				ArrayList<String> consistentValue = new ArrayList<String>();
+				ArrayList<String> consistentValue = new ArrayList<>();
 				for (OWLAxiom Ci : subsetM) {
 					System.out.println("Ci: " + Ci);
 
@@ -149,91 +158,79 @@ class IDmcs {
 					manager5.addAxiom(axiomOntology5, Ci);
 
 					if (hermitRf5 == null) {
-						reasoner5 = jFactRf3.createReasoner(axiomOntology5, configurationJFact);
+						reasoner5 = jFactRf5.createReasoner(axiomOntology5, configurationJFact);
 					} else {
-						reasoner5 = hermitRf3.createReasoner(axiomOntology5, configurationHermit);
+						reasoner5 = hermitRf5.createReasoner(axiomOntology5, configurationHermit);
 					}
 
 					System.out.println("Is K minus (subset M minus Ci) consistent? " + reasoner5.isConsistent());
 
-					if (reasoner5.isConsistent() == true) {
+					if (reasoner5.isConsistent()) {
 						consistentValue.add("true");
-					} else if (reasoner5.isConsistent() == false) {
+					} else {
 						consistentValue.add("false");
 					}
 
 				}
 
-				if (reasoner3.isConsistent() == true) {
-					if (ContainAllFalseQuestion.doesListContainAllFalse(consistentValue) == true) {
-						MCSes.add(subsetM);
-					}
+				if (reasoner3.isConsistent() && ContainAllFalseQuestion.doesListContainAllFalse(consistentValue)) {
+					mcses.add(subsetM);
 				}
 			}
 
-			System.out.println("MCSes size: " + MCSes.size());
+			System.out.println("MCSes size: " + mcses.size());
 
 			Set<OWLClass> ontologyClass2 = null;
 			Set<OWLNamedIndividual> ontologyIndividual2 = null;
 			Set<OWLObjectProperty> ontologyObjectProperty2 = null;
 
-			HashSet<OWLClass> MCSClassSet = new HashSet<OWLClass>();
-			HashSet<OWLNamedIndividual> MCSIndividualSet = new HashSet<OWLNamedIndividual>();
-			HashSet<OWLObjectProperty> MCSObjectPropertySet = new HashSet<OWLObjectProperty>();
+			Set<OWLClass> mcsClassSet = new HashSet<>();
+			Set<OWLNamedIndividual> mcsIndividualSet = new HashSet<>();
+			Set<OWLObjectProperty> mcsObjectPropertySet = new HashSet<>();
 
-			for (Set<OWLAxiom> MCS : MCSes) {
-				System.out.println("MCS: " + MCS);
-				for (OWLAxiom axiomInMcs : MCS) {
+			for (Set<OWLAxiom> mcs : mcses) {
+				System.out.println("MCS: " + mcs);
+				for (OWLAxiom axiomInMcs : mcs) {
 
-					ontologyClass2 = (Set<OWLClass>) axiomInMcs.getClassesInSignature();
-					ontologyIndividual2 = (Set<OWLNamedIndividual>) axiomInMcs.getIndividualsInSignature();
-					ontologyObjectProperty2 = (Set<OWLObjectProperty>) axiomInMcs.getObjectPropertiesInSignature();
+					ontologyClass2 = axiomInMcs.getClassesInSignature();
+					ontologyIndividual2 = axiomInMcs.getIndividualsInSignature();
+					ontologyObjectProperty2 = axiomInMcs.getObjectPropertiesInSignature();
 
 					for (OWLClass theClass3 : ontologyClass2) {
-						MCSClassSet.add(theClass3);
+						mcsClassSet.add(theClass3);
 					}
 					for (OWLNamedIndividual theIndividual3 : ontologyIndividual2) {
-						MCSIndividualSet.add(theIndividual3);
+						mcsIndividualSet.add(theIndividual3);
 					}
 					for (OWLObjectProperty theObjectProperty3 : ontologyObjectProperty2) {
-						MCSObjectPropertySet.add(theObjectProperty3);
+						mcsObjectPropertySet.add(theObjectProperty3);
 					}
 
 				}
 
 			}
 
-			int cardOfMCSesSign = MCSClassSet.size() + MCSIndividualSet.size() + MCSObjectPropertySet.size();
-			System.out.println("Cardinality of Class in MCS: " + MCSClassSet.size());
-			System.out.println("Cardinality of Individual in MCS: " + MCSIndividualSet.size());
-			System.out.println("Cardinality of ObjectProperty in MCS: " + MCSObjectPropertySet.size());
+			int cardOfMCSesSign = mcsClassSet.size() + mcsIndividualSet.size() + mcsObjectPropertySet.size();
+			System.out.println("Cardinality of Class in MCS: " + mcsClassSet.size());
+			System.out.println("Cardinality of Individual in MCS: " + mcsIndividualSet.size());
+			System.out.println("Cardinality of ObjectProperty in MCS: " + mcsObjectPropertySet.size());
 			System.out.println("Cardinality of signatures in MCS: " + cardOfMCSesSign);
-			System.out.println("Cardinality of signatures in K: " + cardOfSignInK);
+			System.out.println("Cardinality of signatures in K: " + cardOfSignInKFloat);
 
-			if ((cardOfMCSesSign == 0) && (cardOfSignInK == 0)) {
+			if ((cardOfMCSesSign == 0) && (cardOfSignInKFloat == 0)) {
 				System.out.println("10. ID_MCS INCONSISTENCY MEASURE ID_mcs: 0");
 			} else {
-				System.out.println("10. ID_MCS INCONSISTENCY MEASURE ID_mcs: " + cardOfMCSesSign / cardOfSignInK);
+				System.out.println("10. ID_MCS INCONSISTENCY MEASURE ID_mcs: " + cardOfMCSesSign / cardOfSignInKFloat);
 			}
 			System.out.println("***************************************************************");
-		} catch (OWLOntologyRenameException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TimeOutException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ReasonerInterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (OWLOntologyCreationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
-		TotalTimeExecution.totalTime(startTime);
+			TotalTimeExecution.totalTime(startTime);
+
+		} catch (OWLOntologyRenameException | TimeOutException | ReasonerInterruptedException
+				| OWLOntologyCreationException | FileNotFoundException e) {
+			e.printStackTrace();
+			logger.error(e);
+		}
 
 	}
 }

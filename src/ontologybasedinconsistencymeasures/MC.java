@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner.ReasonerFactory;
 import org.semanticweb.owl.explanation.api.Explanation;
@@ -27,23 +28,29 @@ import org.semanticweb.owlapi.reasoner.TimeOutException;
 
 class MC {
 
+	private static final Logger logger = Logger.getLogger(MC.class);
+
 	static OWLOntologyManager manager6 = OWLManager.createOWLOntologyManager();
 	static OWLReasoner reasoner6;
 	static OWLReasoner reasoner8;
 	static AddAxiom addAxiom6;
 	static Set<OWLAxiom> axiomsToRemove6;
-	static Set<OWLAxiom> ontologyAxiomsCausingUnsatisfiable = new HashSet<OWLAxiom>();
+	static Set<OWLAxiom> ontologyAxiomsCausingUnsatisfiable = new HashSet<>();
 	static ArrayList<Integer> explanationSizeList = new ArrayList<>();
 	static ArrayList<Integer> consistentSubsetSize = new ArrayList<>();
-	static ArrayList<Set<OWLAxiom>> mckCandidate = new ArrayList<Set<OWLAxiom>>();
-	static HashSet<Set<OWLAxiom>> inconsistentSubset = new HashSet<Set<OWLAxiom>>();
-	static HashSet<Set<OWLAxiom>> consistentSubset = new HashSet<Set<OWLAxiom>>();
+	static ArrayList<Set<OWLAxiom>> mckCandidate = new ArrayList<>();
+	static Set<Set<OWLAxiom>> inconsistentSubset = new HashSet<>();
+	static Set<Set<OWLAxiom>> consistentSubset = new HashSet<>();
 
 	static int mcSize;
 	static float scSize;
 	static float imc;
 
-	public static void Imc_measure(Set<Explanation<OWLAxiom>> explanations, HashSet<OWLAxiom> ontologyAxiomSet,
+	private MC() {
+		throw new IllegalStateException("MC");
+	}
+
+	public static void imcMeasure(Set<Explanation<OWLAxiom>> explanations, Set<OWLAxiom> ontologyAxiomSet,
 			ReasonerFactory hermitRf6, OWLReasonerFactory jFactRf6, ReasonerFactory hermitRf8,
 			OWLReasonerFactory jFactRf8, Configuration configurationHermit,
 			OWLReasonerConfiguration configurationJFact) {
@@ -56,7 +63,7 @@ class MC {
 			PrintStream ps = new PrintStream(fos);
 			System.setOut(ps);
 
-			OWLOntology axiomOntology6 = manager6.createOntology();
+			OWLOntology axiomOntology6 = null;
 
 			for (Set<OWLAxiom> s : PowerSetCount.powerSet(ontologyAxiomSet)) {
 				manager6 = OWLManager.createOWLOntologyManager();
@@ -82,23 +89,20 @@ class MC {
 				System.out.println("C: " + s);
 				System.out.println("Is C consistent? " + reasoner6.isConsistent());
 
-				if (reasoner6.isConsistent() == true) {
+				if (reasoner6.isConsistent()) {
 					consistentSubset.add(s);
 					consistentSubsetSize.add(s.size());
-				}
-
-				if (reasoner6.isConsistent() == false) {
+				} else {
 					inconsistentSubset.add(s);
 				}
 			}
 
 			System.out.println("Size of consistent subset size: " + consistentSubsetSize.size());
 
-			if (explanations.size() > 0) {
+			if (!explanations.isEmpty()) {
 				for (Set<OWLAxiom> inconsistent : inconsistentSubset) {
 					for (Set<OWLAxiom> consistent : consistentSubset) {
-						if ((inconsistent.containsAll(consistent) == true)
-								&& (inconsistent.equals(consistent) == false)) {
+						if ((inconsistent.containsAll(consistent)) && (!inconsistent.equals(consistent))) {
 							mckCandidate.add(consistent);
 						}
 					}
@@ -108,68 +112,53 @@ class MC {
 				mckCandidate.add(ontologyAxiomSet);
 			}
 
-			for (Set<OWLAxiom> mck : NotMCK.eliminate_notMCK(mckCandidate)) {
+			for (Set<OWLAxiom> mck : NotMCK.eliminateNotMCK(mckCandidate)) {
 				System.out.println("MCK: " + mck);
 			}
 
-			mcSize = NotMCK.eliminate_notMCK(mckCandidate).size();
+			mcSize = NotMCK.eliminateNotMCK(mckCandidate).size();
 
 			// To compute SC(K) in MC Inconsistency Measure
-			try {
-				OWLOntologyManager manager8 = OWLManager.createOWLOntologyManager();
-				OWLOntology axiomOntology8 = manager8.createOntology();
-				Set<OWLAxiom> axiomsToRemove8;
-				AddAxiom addAxiom8;
+			OWLOntologyManager manager8 = null;
+			OWLOntology axiomOntology8 = null;
+			Set<OWLAxiom> axiomsToRemove8;
+			AddAxiom addAxiom8;
 
-				if (configurationHermit == null) {
-					configurationJFact = new SimpleConfiguration();
+			if (configurationHermit == null) {
+				configurationJFact = new SimpleConfiguration();
+			} else {
+				configurationHermit = new Configuration();
+				configurationHermit.throwInconsistentOntologyException = false;
+			}
+
+			for (OWLAxiom theAxiom : ontologyAxiomSet) {
+
+				manager8 = OWLManager.createOWLOntologyManager();
+				axiomOntology8 = manager8.createOntology();
+
+				axiomsToRemove8 = axiomOntology8.getAxioms();
+
+				if (axiomsToRemove8 != null) {
+					manager8.removeAxioms(axiomOntology8, axiomsToRemove8);
+				}
+
+				addAxiom8 = new AddAxiom(axiomOntology8, theAxiom);
+				manager8.applyChange(addAxiom8);
+
+				if (hermitRf8 == null) {
+					reasoner8 = jFactRf8.createReasoner(axiomOntology8, configurationJFact); // for
 				} else {
-					configurationHermit = new Configuration();
-					configurationHermit.throwInconsistentOntologyException = false;
+					reasoner8 = hermitRf8.createReasoner(axiomOntology8, configurationHermit); // for
 				}
 
-				for (OWLAxiom theAxiom : ontologyAxiomSet) {
+				System.out.println("The axiom: " + theAxiom);
+				System.out
+						.println("Is the axiom (" + theAxiom + ") consistent/satisfiable? " + reasoner8.isConsistent());
 
-					manager8 = OWLManager.createOWLOntologyManager();
-					axiomOntology8 = manager8.createOntology();
-
-					axiomsToRemove8 = axiomOntology8.getAxioms();
-
-					if (axiomsToRemove8 != null) {
-						manager8.removeAxioms(axiomOntology8, axiomsToRemove8);
-					}
-
-					addAxiom8 = new AddAxiom(axiomOntology8, theAxiom);
-					manager8.applyChange(addAxiom8);
-
-					if (hermitRf8 == null) {
-						reasoner8 = jFactRf8.createReasoner(axiomOntology8, configurationJFact); // for
-					} else {
-						reasoner8 = hermitRf8.createReasoner(axiomOntology8, configurationHermit); // for
-					}
-
-					System.out.println("The axiom: " + theAxiom);
-					System.out.println(
-							"Is the axiom (" + theAxiom + ") consistent/satisfiable? " + reasoner8.isConsistent());
-
-					if (reasoner8.isConsistent() == false) {
-						ontologyAxiomsCausingUnsatisfiable.add(theAxiom);
-					}
-
+				if (!reasoner8.isConsistent()) {
+					ontologyAxiomsCausingUnsatisfiable.add(theAxiom);
 				}
 
-			} catch (OWLOntologyRenameException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (TimeOutException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (ReasonerInterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (OWLOntologyCreationException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 
 			scSize = ontologyAxiomsCausingUnsatisfiable.size();
@@ -179,15 +168,14 @@ class MC {
 
 			System.out.println("7. MC INCONSISTENCY MEASURE I_mc: " + imc);
 			System.out.println("***************************************************************");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (OWLOntologyCreationException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
 
-		TotalTimeExecution.totalTime(startTime);
+			TotalTimeExecution.totalTime(startTime);
+
+		} catch (OWLOntologyRenameException | TimeOutException | ReasonerInterruptedException | FileNotFoundException
+				| OWLOntologyCreationException e) {
+			e.printStackTrace();
+			logger.error(e);
+		}
 
 	}
 }

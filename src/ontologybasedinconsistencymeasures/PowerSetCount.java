@@ -6,6 +6,10 @@ import java.util.Set;
 
 class PowerSetCount {
 
+	private PowerSetCount() {
+		throw new IllegalStateException("PowerSetCount");
+	}
+
 	public static <T> Set<Set<T>> powerSet(Set<T> originalSet) {
 		Set<Set<T>> sets = new HashSet<Set<T>>();
 		if (originalSet.isEmpty()) {

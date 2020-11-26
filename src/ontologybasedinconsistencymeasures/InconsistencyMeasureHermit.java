@@ -5,6 +5,8 @@ import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
 import org.semanticweb.HermiT.Configuration;
 import org.semanticweb.HermiT.Reasoner.ReasonerFactory;
 import org.semanticweb.owl.explanation.api.Explanation;
@@ -28,17 +30,19 @@ import org.semanticweb.owlapi.reasoner.TimeOutException;
 
 public class InconsistencyMeasureHermit {
 
+	private static final Logger logger = Logger.getLogger(InconsistencyMeasureHermit.class);
+
 	static Set<OWLAxiom> arrayOfExplanation = null;
-	static Set<Set<OWLAxiom>> arrayOfExplanationSet = new HashSet<Set<OWLAxiom>>(3000000, 1000000F);
-	static HashSet<OWLAxiom> mikAxiomSet = new HashSet<OWLAxiom>();
-	static HashSet<OWLAxiom> topBottom = new HashSet<OWLAxiom>();
-	static HashSet<OWLClass> mikClassSet = new HashSet<OWLClass>();
-	static HashSet<OWLNamedIndividual> mikIndividualSet = new HashSet<OWLNamedIndividual>();
-	static HashSet<OWLObjectProperty> mikObjectPropertySet = new HashSet<OWLObjectProperty>();
+	static Set<Set<OWLAxiom>> arrayOfExplanationSet = new HashSet<>(3000000, 1000000F);
+	static Set<OWLAxiom> mikAxiomSet = new HashSet<>();
+	static Set<OWLAxiom> topBottom = new HashSet<>();
+	static Set<OWLClass> mikClassSet = new HashSet<>();
+	static Set<OWLNamedIndividual> mikIndividualSet = new HashSet<>();
+	static Set<OWLObjectProperty> mikObjectPropertySet = new HashSet<>();
 	static Set<OWLClass> inconsistentClass = null;
 	static Set<OWLNamedIndividual> inconsistentIndividual = null;
 	static Set<OWLObjectProperty> inconsistentObjectProperty = null;
-	static HashSet<OWLAxiom> ontologyAxiomSet = new HashSet<OWLAxiom>(3000000, 1000000F);
+	static Set<OWLAxiom> ontologyAxiomSet = new HashSet<>(3000000, 1000000F);
 	static ReasonerFactory rf3 = new ReasonerFactory();
 	static ReasonerFactory rf5 = new ReasonerFactory();
 	static ReasonerFactory rf6 = new ReasonerFactory();
@@ -46,8 +50,10 @@ public class InconsistencyMeasureHermit {
 
 	public static void main(String[] args) throws Exception {
 
+		BasicConfigurator.configure();
+
 		try {
-			File inputOntologyFile = new File("data/knowledgebaseK1.owl");
+			File inputOntologyFile = new File("data/WebOnt-description-logic-004.owl");
 
 			// ReasonerFactory for Hermit
 			ReasonerFactory rf = new ReasonerFactory();
@@ -65,8 +71,7 @@ public class InconsistencyMeasureHermit {
 			// OWLReasoner for Hermit (the format is also used by JFact as well)
 			OWLReasoner reasoner = rf.createReasoner(ontology, configuration);
 
-			System.out.println(
-					"Is ontology (file name: " + inputOntologyFile + ") consistent? " + reasoner.isConsistent());
+			logger.info("Is ontology (file name: " + inputOntologyFile + ") consistent? " + reasoner.isConsistent());
 
 			ExplanationGenerator<OWLAxiom> explainInconsistency = new InconsistentOntologyExplanationGeneratorFactory(
 					rf, 1000000000000000000L).createExplanationGenerator(ontology);
@@ -75,48 +80,48 @@ public class InconsistencyMeasureHermit {
 			Set<Explanation<OWLAxiom>> explanations = explainInconsistency
 					.getExplanations(df.getOWLSubClassOfAxiom(df.getOWLThing(), df.getOWLNothing()), 941);
 
-			System.out.println("Explanation of inconsistency (MI(K)): " + explanations);
+			logger.info("Explanation of inconsistency (MI(K)): " + explanations);
 
 			SizeOfK.sizeK(ontologyAxiomSet);
-			ManageOWL.owlsetmanager(ontology, ontologyAxiomSet);
+			ManageOWL.owlSetManager(ontology, ontologyAxiomSet);
 
-			System.out.println("                                   ");
-			System.out.println("===============================================================");
-			System.out.println("==============INCONSISTENCY MEASURES FOR ONTOLOGY==============");
-			System.out.println("===============================================================");
+			logger.info("                                   ");
+			logger.info("===============================================================");
+			logger.info("=========================ONTI MEASURES=========================");
+			logger.info("===============================================================");
 
-			System.out.println("Explanation of inconsistency (MI(K)): " + explanations);
+			logger.info("Explanation of inconsistency (MI(K)): " + explanations);
 
 			// Explanation is M in MI(K), while explanations is MI(K)
 			for (Explanation<OWLAxiom> explanation : explanations) {
 
 				// arrayOfExplanation is M in MI(K)
 				arrayOfExplanation = explanation.getAxioms();
-				System.out.println("-----------------------------------------------------------------------------");
-				System.out.println("MI(K) subset: " + arrayOfExplanation);
+				logger.info("-----------------------------------------------------------------------------");
+				logger.info("MI(K) subset: " + arrayOfExplanation);
 
 				// arrayOfExplanationSet is MI(K)set
 				arrayOfExplanationSet.add(arrayOfExplanation);
-				System.out.println("-----------------------------------------------------------------------------");
+				logger.info("-----------------------------------------------------------------------------");
 
-				System.out.println("Axioms causing the inconsistency: ");
+				logger.info("Axioms causing the inconsistency: ");
 				for (OWLAxiom causingAxiom : arrayOfExplanation) {
-					System.out.println(causingAxiom);
+					logger.info(causingAxiom);
 					mikAxiomSet.add(causingAxiom);
-					if ((causingAxiom.isBottomEntity() == true) || (causingAxiom.isTopEntity() == true)) {
+					if ((causingAxiom.isBottomEntity()) || (causingAxiom.isTopEntity())) {
 						topBottom.add(causingAxiom);
 					}
 
-					inconsistentClass = (Set<OWLClass>) causingAxiom.getClassesInSignature();
+					inconsistentClass = causingAxiom.getClassesInSignature();
 					for (OWLClass theClass : inconsistentClass) {
 						mikClassSet.add(theClass);
 					}
-					inconsistentIndividual = (Set<OWLNamedIndividual>) causingAxiom.getIndividualsInSignature();
+					inconsistentIndividual = causingAxiom.getIndividualsInSignature();
 					for (OWLNamedIndividual theIndividual : inconsistentIndividual) {
 
 						mikIndividualSet.add(theIndividual);
 					}
-					inconsistentObjectProperty = (Set<OWLObjectProperty>) causingAxiom.getObjectPropertiesInSignature();
+					inconsistentObjectProperty = causingAxiom.getObjectPropertiesInSignature();
 					for (OWLObjectProperty theObjectProperty : inconsistentObjectProperty) {
 						mikObjectPropertySet.add(theObjectProperty);
 					}
@@ -124,38 +129,38 @@ public class InconsistencyMeasureHermit {
 
 			}
 
-			System.out.println("theClass: " + mikClassSet);
+			logger.info("theClass: " + mikClassSet);
 
-			Drastic.Id_measure(reasoner);
-			MI.Imi_measure(ontology, explanations);
-			MIc.Imic_measure(arrayOfExplanation, explanations);
-			Df.Idf_measure(ontologyAxiomSet, arrayOfExplanation, explanations, rf6, null);
-			Problematic.Ip_measure(mikAxiomSet);
-			IR.Iir_measure(explanations, ontologyAxiomSet);
-			MC.Imc_measure(explanations, ontologyAxiomSet, rf6, null, rf8, null, configuration, null);
-			Nc.Inc_measure(ontologyAxiomSet, rf6, null);
-			Mv.Imv_measure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet);
-			IDmcs.IDmcs_measure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet, rf3, null, rf5,
+			Drastic.idMeasure(reasoner);
+			MI.imiMeasure(ontology, explanations);
+			MIc.imicMeasure(arrayOfExplanation, explanations);
+			Df.idfMeasure(ontologyAxiomSet, arrayOfExplanation, explanations, rf6, null);
+			Problematic.ipMeasure(mikAxiomSet);
+			IR.iirMeasure(explanations, ontologyAxiomSet);
+			MC.imcMeasure(explanations, ontologyAxiomSet, rf6, null, rf8, null, configuration, null);
+			Nc.incMeasure(ontologyAxiomSet, rf6, null);
+			Mv.imvMeasure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet);
+			IDmcs.idMcsMeasure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet, rf3, null, rf5,
 					null, configuration, null);
 
-			System.out.println("***************************************************************");
+			logger.info("***************************************************************");
 
 		} catch (NoSuchElementException e) {
-			System.out.println("NoSuchElementException: " + e.getMessage());
+			logger.error("NoSuchElementException: " + e.getMessage());
 		} catch (InconsistentOntologyException f) {
-			System.out.println("InconsistentOntologyException: " + f.getMessage());
+			logger.error("InconsistentOntologyException: " + f.getMessage());
 		} catch (OWLOntologyCreationException g) {
-			System.out.println("InconsistentOntologyException: " + g.getMessage());
+			logger.error("InconsistentOntologyException: " + g.getMessage());
 		} catch (ExplanationGeneratorInterruptedException h) {
-			System.out.println("ExplanationGeneratorInterruptedException: " + h.getMessage());
+			logger.error("ExplanationGeneratorInterruptedException: " + h.getMessage());
 		} catch (ReasonerInterruptedException i) {
-			System.out.println("ReasonerInterruptedException: " + i.getMessage());
+			logger.error("ReasonerInterruptedException: " + i.getMessage());
 		} catch (ExplanationException k) {
-			System.out.println("ExplanationException: " + k.getMessage());
+			logger.error("ExplanationException: " + k.getMessage());
 		} catch (TimeOutException l) {
-			System.out.println("TimeOutException: " + l.getMessage());
+			logger.error("TimeOutException: " + l.getMessage());
 		} catch (OutOfMemoryError m) {
-			System.out.println("OutOfMemoryError: " + m.getMessage());
+			logger.error("OutOfMemoryError: " + m.getMessage());
 		}
 
 	}

@@ -4,19 +4,28 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owlapi.model.OWLAxiom;
+import org.semanticweb.owlapi.model.OWLOntologyRenameException;
+import org.semanticweb.owlapi.reasoner.ReasonerInterruptedException;
+import org.semanticweb.owlapi.reasoner.TimeOutException;
 
 class IR {
 
-	static int Ksize;
-	static float sizeOfMI;
-	static float I_ir;
+	private static final Logger logger = Logger.getLogger(IR.class);
 
-	public static void Iir_measure(Set<Explanation<OWLAxiom>> explanations, HashSet<OWLAxiom> ontologyAxiomSet) {
+	static int kSize;
+	static float sizeOfMI;
+	static float iir;
+
+	private IR() {
+		throw new IllegalStateException("IR");
+	}
+
+	public static void iirMeasure(Set<Explanation<OWLAxiom>> explanations, Set<OWLAxiom> ontologyAxiomSet) {
 
 		long startTime = System.currentTimeMillis();
 
@@ -26,24 +35,26 @@ class IR {
 			PrintStream ps = new PrintStream(fos);
 			System.setOut(ps);
 
-			Ksize = SizeOfK.sizeK(ontologyAxiomSet);
+			kSize = SizeOfK.sizeK(ontologyAxiomSet);
 			sizeOfMI = explanations.size();
 
-			I_ir = sizeOfMI / Ksize;
+			iir = sizeOfMI / kSize;
 			System.out.println("Size of MI(K): " + sizeOfMI);
-			System.out.println("Size of K: " + Ksize);
-			if ((sizeOfMI == 0) && (Ksize == 0)) {
+			System.out.println("Size of K: " + kSize);
+			if ((sizeOfMI == 0) && (kSize == 0)) {
 				System.out.println("6. INCOMPATIBILITY RATIO INCONSISTENCY MEASURE I_ir: 0");
 			} else {
-				System.out.println("6. INCOMPATIBILITY RATIO INCONSISTENCY MEASURE I_ir: " + I_ir);
+				System.out.println("6. INCOMPATIBILITY RATIO INCONSISTENCY MEASURE I_ir: " + iir);
 			}
 			System.out.println("-----------------------------------------------------------------------------");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
-		TotalTimeExecution.totalTime(startTime);
+			TotalTimeExecution.totalTime(startTime);
+
+		} catch (OWLOntologyRenameException | TimeOutException | ReasonerInterruptedException
+				| FileNotFoundException e) {
+			e.printStackTrace();
+			logger.error(e);
+		}
 
 	}
 

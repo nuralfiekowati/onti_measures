@@ -3,6 +3,7 @@ package ontologybasedinconsistencymeasures;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.AxiomType;
 import org.semanticweb.owlapi.model.OWLAsymmetricObjectPropertyAxiom;
 import org.semanticweb.owlapi.model.OWLAxiom;
@@ -31,188 +32,194 @@ import org.semanticweb.owlapi.model.OWLTransitiveObjectPropertyAxiom;
 
 class ManageOWL {
 
-	public static void owlsetmanager(OWLOntology ontology, HashSet<OWLAxiom> ontologyAxiomSet) {
+	private ManageOWL() {
+		throw new IllegalStateException("ManageOWL");
+	}
 
-		Set<OWLSubClassOfAxiom> OWLSubClassOfAxiomSet = ontology.getAxioms(AxiomType.SUBCLASS_OF);
-		for (OWLSubClassOfAxiom OWLSubClassOf : OWLSubClassOfAxiomSet) {
-			ontologyAxiomSet.add(OWLSubClassOf);
+	private static final Logger logger = Logger.getLogger(ManageOWL.class);
+
+	public static void owlSetManager(OWLOntology ontology, Set<OWLAxiom> ontologyAxiomSet) {
+
+		Set<OWLSubClassOfAxiom> owlSubClassOfAxiomSet = ontology.getAxioms(AxiomType.SUBCLASS_OF);
+		for (OWLSubClassOfAxiom owlSubClassOf : owlSubClassOfAxiomSet) {
+			ontologyAxiomSet.add(owlSubClassOf);
 		}
 
-		Set<OWLEquivalentClassesAxiom> OWLEquivalentClassesAxiomSet = ontology.getAxioms(AxiomType.EQUIVALENT_CLASSES);
-		for (OWLEquivalentClassesAxiom OWLEquivalentClasses : OWLEquivalentClassesAxiomSet) {
-			ontologyAxiomSet.add(OWLEquivalentClasses);
+		Set<OWLEquivalentClassesAxiom> owlEquivalentClassesAxiomSet = ontology.getAxioms(AxiomType.EQUIVALENT_CLASSES);
+		for (OWLEquivalentClassesAxiom owlEquivalentClasses : owlEquivalentClassesAxiomSet) {
+			ontologyAxiomSet.add(owlEquivalentClasses);
 		}
 
-		Set<OWLDisjointClassesAxiom> OWLDisjointClassesAxiomSet = ontology.getAxioms(AxiomType.DISJOINT_CLASSES);
-		for (OWLDisjointClassesAxiom OWLDisjointClasses : OWLDisjointClassesAxiomSet) {
-			ontologyAxiomSet.add(OWLDisjointClasses);
+		Set<OWLDisjointClassesAxiom> owlDisjointClassesAxiomSet = ontology.getAxioms(AxiomType.DISJOINT_CLASSES);
+		for (OWLDisjointClassesAxiom owlDisjointClasses : owlDisjointClassesAxiomSet) {
+			ontologyAxiomSet.add(owlDisjointClasses);
 		}
 
-		Set<OWLDisjointUnionAxiom> OWLDisjointUnionAxiomSet = ontology.getAxioms(AxiomType.DISJOINT_UNION);
-		for (OWLDisjointUnionAxiom OWLDisjointUnion : OWLDisjointUnionAxiomSet) {
-			ontologyAxiomSet.add(OWLDisjointUnion);
+		Set<OWLDisjointUnionAxiom> owlDisjointUnionAxiomSet = ontology.getAxioms(AxiomType.DISJOINT_UNION);
+		for (OWLDisjointUnionAxiom owlDisjointUnion : owlDisjointUnionAxiomSet) {
+			ontologyAxiomSet.add(owlDisjointUnion);
 		}
 
-		Set<OWLDifferentIndividualsAxiom> OWLDifferentIndividualsAxiomSet = ontology
+		Set<OWLDifferentIndividualsAxiom> owlDifferentIndividualsAxiomSet = ontology
 				.getAxioms(AxiomType.DIFFERENT_INDIVIDUALS);
-		for (OWLDifferentIndividualsAxiom OWLDifferentIndividuals : OWLDifferentIndividualsAxiomSet) {
-			ontologyAxiomSet.add(OWLDifferentIndividuals);
+		for (OWLDifferentIndividualsAxiom owlDifferentIndividuals : owlDifferentIndividualsAxiomSet) {
+			ontologyAxiomSet.add(owlDifferentIndividuals);
 		}
 
-		Set<OWLSameIndividualAxiom> OWLSameIndividualAxiomSet = ontology.getAxioms(AxiomType.SAME_INDIVIDUAL);
-		for (OWLSameIndividualAxiom OWLSameIndividual : OWLSameIndividualAxiomSet) {
-			ontologyAxiomSet.add(OWLSameIndividual);
+		Set<OWLSameIndividualAxiom> owlSameIndividualAxiomSet = ontology.getAxioms(AxiomType.SAME_INDIVIDUAL);
+		for (OWLSameIndividualAxiom owlSameIndividual : owlSameIndividualAxiomSet) {
+			ontologyAxiomSet.add(owlSameIndividual);
 		}
 
-		Set<OWLClassAssertionAxiom> OWLClassAssertionAxiomSet = ontology.getAxioms(AxiomType.CLASS_ASSERTION);
-		for (OWLClassAssertionAxiom OWLClassAssertion : OWLClassAssertionAxiomSet) {
-			ontologyAxiomSet.add(OWLClassAssertion);
+		Set<OWLClassAssertionAxiom> owlClassAssertionAxiomSet = ontology.getAxioms(AxiomType.CLASS_ASSERTION);
+		for (OWLClassAssertionAxiom owlClassAssertion : owlClassAssertionAxiomSet) {
+			ontologyAxiomSet.add(owlClassAssertion);
 		}
 
-		Set<OWLObjectPropertyAssertionAxiom> OWLObjectPropertyAssertionAxiomSet = ontology
+		Set<OWLObjectPropertyAssertionAxiom> owlObjectPropertyAssertionAxiomSet = ontology
 				.getAxioms(AxiomType.OBJECT_PROPERTY_ASSERTION);
-		for (OWLObjectPropertyAssertionAxiom OWLObjectPropertyAssertion : OWLObjectPropertyAssertionAxiomSet) {
-			ontologyAxiomSet.add(OWLObjectPropertyAssertion);
+		for (OWLObjectPropertyAssertionAxiom owlObjectPropertyAssertion : owlObjectPropertyAssertionAxiomSet) {
+			ontologyAxiomSet.add(owlObjectPropertyAssertion);
 		}
 
-		Set<OWLNegativeObjectPropertyAssertionAxiom> OWLNegativeObjectPropertyAssertionAxiomSet = ontology
+		Set<OWLNegativeObjectPropertyAssertionAxiom> owlNegativeObjectPropertyAssertionAxiomSet = ontology
 				.getAxioms(AxiomType.NEGATIVE_OBJECT_PROPERTY_ASSERTION);
-		for (OWLNegativeObjectPropertyAssertionAxiom OWLNegativeObjectPropertyAssertion : OWLNegativeObjectPropertyAssertionAxiomSet) {
-			ontologyAxiomSet.add(OWLNegativeObjectPropertyAssertion);
+		for (OWLNegativeObjectPropertyAssertionAxiom owlNegativeObjectPropertyAssertion : owlNegativeObjectPropertyAssertionAxiomSet) {
+			ontologyAxiomSet.add(owlNegativeObjectPropertyAssertion);
 		}
 
-		Set<OWLSubObjectPropertyOfAxiom> OWLSubObjectPropertyOfAxiomSet = ontology
+		Set<OWLSubObjectPropertyOfAxiom> owlSubObjectPropertyOfAxiomSet = ontology
 				.getAxioms(AxiomType.SUB_OBJECT_PROPERTY);
-		for (OWLSubObjectPropertyOfAxiom OWLSubObjectPropertyOf : OWLSubObjectPropertyOfAxiomSet) {
-			ontologyAxiomSet.add(OWLSubObjectPropertyOf);
+		for (OWLSubObjectPropertyOfAxiom owlSubObjectPropertyOf : owlSubObjectPropertyOfAxiomSet) {
+			ontologyAxiomSet.add(owlSubObjectPropertyOf);
 		}
 
-		Set<OWLEquivalentObjectPropertiesAxiom> OWLEquivalentObjectPropertyAxiomSet = ontology
+		Set<OWLEquivalentObjectPropertiesAxiom> owlEquivalentObjectPropertyAxiomSet = ontology
 				.getAxioms(AxiomType.EQUIVALENT_OBJECT_PROPERTIES);
-		for (OWLEquivalentObjectPropertiesAxiom OWLEquivalentObjectProperty : OWLEquivalentObjectPropertyAxiomSet) {
-			ontologyAxiomSet.add(OWLEquivalentObjectProperty);
+		for (OWLEquivalentObjectPropertiesAxiom owlEquivalentObjectProperty : owlEquivalentObjectPropertyAxiomSet) {
+			ontologyAxiomSet.add(owlEquivalentObjectProperty);
 		}
 
-		Set<OWLDisjointObjectPropertiesAxiom> OWLDisjointObjectPropertiesSet = ontology
+		Set<OWLDisjointObjectPropertiesAxiom> owlDisjointObjectPropertiesSet = ontology
 				.getAxioms(AxiomType.DISJOINT_OBJECT_PROPERTIES);
-		for (OWLDisjointObjectPropertiesAxiom OWLDisjointObjectProperties : OWLDisjointObjectPropertiesSet) {
-			ontologyAxiomSet.add(OWLDisjointObjectProperties);
+		for (OWLDisjointObjectPropertiesAxiom owlDisjointObjectProperties : owlDisjointObjectPropertiesSet) {
+			ontologyAxiomSet.add(owlDisjointObjectProperties);
 		}
 
-		Set<OWLInverseObjectPropertiesAxiom> OWLInverseObjectPropertiesAxiomSet = ontology
+		Set<OWLInverseObjectPropertiesAxiom> owlInverseObjectPropertiesAxiomSet = ontology
 				.getAxioms(AxiomType.INVERSE_OBJECT_PROPERTIES);
-		for (OWLInverseObjectPropertiesAxiom OWLInverseObjectProperties : OWLInverseObjectPropertiesAxiomSet) {
-			ontologyAxiomSet.add(OWLInverseObjectProperties);
+		for (OWLInverseObjectPropertiesAxiom owlInverseObjectProperties : owlInverseObjectPropertiesAxiomSet) {
+			ontologyAxiomSet.add(owlInverseObjectProperties);
 		}
 
-		Set<OWLObjectPropertyDomainAxiom> OWLObjectPropertyDomainAxiomSet = ontology
+		Set<OWLObjectPropertyDomainAxiom> owlObjectPropertyDomainAxiomSet = ontology
 				.getAxioms(AxiomType.OBJECT_PROPERTY_DOMAIN);
-		for (OWLObjectPropertyDomainAxiom OWLObjectPropertyDomain : OWLObjectPropertyDomainAxiomSet) {
-			ontologyAxiomSet.add(OWLObjectPropertyDomain);
+		for (OWLObjectPropertyDomainAxiom owlObjectPropertyDomain : owlObjectPropertyDomainAxiomSet) {
+			ontologyAxiomSet.add(owlObjectPropertyDomain);
 		}
 
-		Set<OWLObjectPropertyRangeAxiom> OWLObjectPropertyRangeAxiomSet = ontology
+		Set<OWLObjectPropertyRangeAxiom> owlObjectPropertyRangeAxiomSet = ontology
 				.getAxioms(AxiomType.OBJECT_PROPERTY_RANGE);
-		for (OWLObjectPropertyRangeAxiom OWLObjectPropertyRange : OWLObjectPropertyRangeAxiomSet) {
-			ontologyAxiomSet.add(OWLObjectPropertyRange);
+		for (OWLObjectPropertyRangeAxiom owlObjectPropertyRange : owlObjectPropertyRangeAxiomSet) {
+			ontologyAxiomSet.add(owlObjectPropertyRange);
 		}
 
-		Set<OWLFunctionalObjectPropertyAxiom> OWLFunctionalObjectPropertyAxiomSet = ontology
+		Set<OWLFunctionalObjectPropertyAxiom> owlFunctionalObjectPropertyAxiomSet = ontology
 				.getAxioms(AxiomType.FUNCTIONAL_OBJECT_PROPERTY);
-		for (OWLFunctionalObjectPropertyAxiom OWLFunctionalObjectProperty : OWLFunctionalObjectPropertyAxiomSet) {
-			ontologyAxiomSet.add(OWLFunctionalObjectProperty);
+		for (OWLFunctionalObjectPropertyAxiom owlFunctionalObjectProperty : owlFunctionalObjectPropertyAxiomSet) {
+			ontologyAxiomSet.add(owlFunctionalObjectProperty);
 		}
 
-		Set<OWLInverseFunctionalObjectPropertyAxiom> OWLInverseFunctionalObjectPropertyAxiomSet = ontology
+		Set<OWLInverseFunctionalObjectPropertyAxiom> owlInverseFunctionalObjectPropertyAxiomSet = ontology
 				.getAxioms(AxiomType.INVERSE_FUNCTIONAL_OBJECT_PROPERTY);
-		for (OWLInverseFunctionalObjectPropertyAxiom OWLInverseFunctionalObjectProperty : OWLInverseFunctionalObjectPropertyAxiomSet) {
-			ontologyAxiomSet.add(OWLInverseFunctionalObjectProperty);
+		for (OWLInverseFunctionalObjectPropertyAxiom owlInverseFunctionalObjectProperty : owlInverseFunctionalObjectPropertyAxiomSet) {
+			ontologyAxiomSet.add(owlInverseFunctionalObjectProperty);
 		}
 
-		Set<OWLReflexiveObjectPropertyAxiom> OWLReflexiveObjectPropertyAxiomSet = ontology
+		Set<OWLReflexiveObjectPropertyAxiom> owlReflexiveObjectPropertyAxiomSet = ontology
 				.getAxioms(AxiomType.REFLEXIVE_OBJECT_PROPERTY);
-		for (OWLReflexiveObjectPropertyAxiom OWLReflexiveObjectProperty : OWLReflexiveObjectPropertyAxiomSet) {
-			ontologyAxiomSet.add(OWLReflexiveObjectProperty);
+		for (OWLReflexiveObjectPropertyAxiom owlReflexiveObjectProperty : owlReflexiveObjectPropertyAxiomSet) {
+			ontologyAxiomSet.add(owlReflexiveObjectProperty);
 		}
 
-		Set<OWLIrreflexiveObjectPropertyAxiom> OWLIrreflexiveObjectPropertyAxiomSet = ontology
+		Set<OWLIrreflexiveObjectPropertyAxiom> owlIrreflexiveObjectPropertyAxiomSet = ontology
 				.getAxioms(AxiomType.IRREFLEXIVE_OBJECT_PROPERTY);
-		for (OWLIrreflexiveObjectPropertyAxiom OWLIrreflexiveObjectProperty : OWLIrreflexiveObjectPropertyAxiomSet) {
-			ontologyAxiomSet.add(OWLIrreflexiveObjectProperty);
+		for (OWLIrreflexiveObjectPropertyAxiom owlIrreflexiveObjectProperty : owlIrreflexiveObjectPropertyAxiomSet) {
+			ontologyAxiomSet.add(owlIrreflexiveObjectProperty);
 		}
 
-		Set<OWLSymmetricObjectPropertyAxiom> OWLSymmetricObjectPropertyAxiomSet = ontology
+		Set<OWLSymmetricObjectPropertyAxiom> owlSymmetricObjectPropertyAxiomSet = ontology
 				.getAxioms(AxiomType.SYMMETRIC_OBJECT_PROPERTY);
-		for (OWLSymmetricObjectPropertyAxiom OWLSymmetricObjectProperty : OWLSymmetricObjectPropertyAxiomSet) {
-			ontologyAxiomSet.add(OWLSymmetricObjectProperty);
+		for (OWLSymmetricObjectPropertyAxiom owlSymmetricObjectProperty : owlSymmetricObjectPropertyAxiomSet) {
+			ontologyAxiomSet.add(owlSymmetricObjectProperty);
 		}
 
-		Set<OWLAsymmetricObjectPropertyAxiom> OWLAsymmetricObjectPropertyAxiomSet = ontology
+		Set<OWLAsymmetricObjectPropertyAxiom> owlAsymmetricObjectPropertyAxiomSet = ontology
 				.getAxioms(AxiomType.ASYMMETRIC_OBJECT_PROPERTY);
-		for (OWLAsymmetricObjectPropertyAxiom OWLAsymmetricObjectProperty : OWLAsymmetricObjectPropertyAxiomSet) {
-			ontologyAxiomSet.add(OWLAsymmetricObjectProperty);
+		for (OWLAsymmetricObjectPropertyAxiom owlAsymmetricObjectProperty : owlAsymmetricObjectPropertyAxiomSet) {
+			ontologyAxiomSet.add(owlAsymmetricObjectProperty);
 		}
 
-		Set<OWLTransitiveObjectPropertyAxiom> OWLTransitiveObjectPropertyAxiomSet = ontology
+		Set<OWLTransitiveObjectPropertyAxiom> owlTransitiveObjectPropertyAxiomSet = ontology
 				.getAxioms(AxiomType.TRANSITIVE_OBJECT_PROPERTY);
-		for (OWLTransitiveObjectPropertyAxiom OWLTransitiveObjectProperty : OWLTransitiveObjectPropertyAxiomSet) {
-			ontologyAxiomSet.add(OWLTransitiveObjectProperty);
+		for (OWLTransitiveObjectPropertyAxiom owlTransitiveObjectProperty : owlTransitiveObjectPropertyAxiomSet) {
+			ontologyAxiomSet.add(owlTransitiveObjectProperty);
 		}
 
-		Set<OWLAxiom> theSet = new HashSet<OWLAxiom>(3000000, 1000000F);
+		Set<OWLAxiom> theSet = new HashSet<>(3000000, 1000000F);
 		theSet.addAll(ontologyAxiomSet);
 
-		System.out.println("----------------------------------------------------------------");
-		
-		int OWLSubClassOfAxiomSetSize = OWLSubClassOfAxiomSet.size();
-		int OWLEquivalentClassesAxiomSetSize = OWLEquivalentClassesAxiomSet.size();
-		int OWLDisjointClassesAxiomSetSize = OWLDisjointClassesAxiomSet.size();
-		int OWLDisjointUnionAxiomSetSize = OWLDisjointUnionAxiomSet.size();
-		int OWLDifferentIndividualsAxiomSetSize = OWLDifferentIndividualsAxiomSet.size();
-		int OWLSameIndividualAxiomSetSize = OWLSameIndividualAxiomSet.size();
-		int OWLClassAssertionAxiomSetSize = OWLClassAssertionAxiomSet.size();
-		int OWLObjectPropertyAssertionAxiomSetSize = OWLObjectPropertyAssertionAxiomSet.size();
-		int OWLNegativeObjectPropertyAssertionAxiomSetSize = OWLNegativeObjectPropertyAssertionAxiomSet.size();
-		int OWLSubObjectPropertyOfAxiomSetSize = OWLSubObjectPropertyOfAxiomSet.size();
-		int OWLEquivalentObjectPropertyAxiomSetSize = OWLEquivalentObjectPropertyAxiomSet.size();
-		int OWLDisjointObjectPropertiesSetSize = OWLDisjointObjectPropertiesSet.size();
-		int OWLInverseObjectPropertiesAxiomSetSize = OWLInverseObjectPropertiesAxiomSet.size();
-		int OWLObjectPropertyDomainAxiomSetSize = OWLObjectPropertyDomainAxiomSet.size();
-		int OWLObjectPropertyRangeAxiomSetSize = OWLObjectPropertyRangeAxiomSet.size();
-		int OWLFunctionalObjectPropertyAxiomSetSize = OWLFunctionalObjectPropertyAxiomSet.size();
-		int OWLInverseFunctionalObjectPropertyAxiomSetSize = OWLInverseFunctionalObjectPropertyAxiomSet.size();
-		int OWLReflexiveObjectPropertyAxiomSetSize = OWLReflexiveObjectPropertyAxiomSet.size();
-		int OWLIrreflexiveObjectPropertyAxiomSetSize = OWLIrreflexiveObjectPropertyAxiomSet.size();
-		int OWLSymmetricObjectPropertyAxiomSetSize = OWLSymmetricObjectPropertyAxiomSet.size();
-		int OWLAsymmetricObjectPropertyAxiomSetSize = OWLAsymmetricObjectPropertyAxiomSet.size();
-		int OWLTransitiveObjectPropertyAxiomSetSize = OWLTransitiveObjectPropertyAxiomSet.size();
+		logger.info("----------------------------------------------------------------");
 
-		System.out.println("OWLSubClassOfAxiomSetSize: " + OWLSubClassOfAxiomSetSize);
-		System.out.println("OWLEquivalentClassesAxiomSetSize: " + OWLEquivalentClassesAxiomSetSize);
-		System.out.println("OWLDisjointClassesAxiomSetSize: " + OWLDisjointClassesAxiomSetSize);
-		System.out.println("OWLDisjointUnionAxiomSetSize: " + OWLDisjointUnionAxiomSetSize);
-		System.out.println("OWLDifferentIndividualsAxiomSetSize: " + OWLDifferentIndividualsAxiomSetSize);
-		System.out.println("OWLSameIndividualAxiomSetSize: " + OWLSameIndividualAxiomSetSize);
-		System.out.println("OWLClassAssertionAxiomSetSize: " + OWLClassAssertionAxiomSetSize);
-		System.out.println("OWLObjectPropertyAssertionAxiomSetSize: " + OWLObjectPropertyAssertionAxiomSetSize);
-		System.out.println("OWLNegativeObjectPropertyAssertionAxiomSetSize: "
-				+ OWLNegativeObjectPropertyAssertionAxiomSetSize);
-		System.out.println("OWLSubObjectPropertyOfAxiomSetSize: " + OWLSubObjectPropertyOfAxiomSetSize);
-		System.out.println("OWLEquivalentObjectPropertyAxiomSetSize: " + OWLEquivalentObjectPropertyAxiomSetSize);
-		System.out.println("OWLDisjointObjectPropertiesSetSize: " + OWLDisjointObjectPropertiesSetSize);
-		System.out.println("OWLInverseObjectPropertiesAxiomSetSize: " + OWLInverseObjectPropertiesAxiomSetSize);
-		System.out.println("OWLObjectPropertyDomainAxiomSetSize: " + OWLObjectPropertyDomainAxiomSetSize);
-		System.out.println("OWLObjectPropertyRangeAxiomSetSize: " + OWLObjectPropertyRangeAxiomSetSize);
-		System.out.println("OWLFunctionalObjectPropertyAxiomSetSize: " + OWLFunctionalObjectPropertyAxiomSetSize);
-		System.out.println("OWLInverseFunctionalObjectPropertyAxiomSetSize: "
-				+ OWLInverseFunctionalObjectPropertyAxiomSetSize);
-		System.out.println("OWLReflexiveObjectPropertyAxiomSetSize: " + OWLReflexiveObjectPropertyAxiomSetSize);
-		System.out.println("OWLIrreflexiveObjectPropertyAxiomSetSize: " + OWLIrreflexiveObjectPropertyAxiomSetSize);
-		System.out.println("OWLSymmetricObjectPropertyAxiomSetSize: " + OWLSymmetricObjectPropertyAxiomSetSize);
-		System.out.println("OWLAsymmetricObjectPropertyAxiomSetSize: " + OWLAsymmetricObjectPropertyAxiomSetSize);
-		System.out.println("OWLTransitiveObjectPropertyAxiomSetSize: " + OWLTransitiveObjectPropertyAxiomSetSize);
-		
-		System.out.println("----------------------------------------------------------------");
+		int owlSubClassOfAxiomSetSize = owlSubClassOfAxiomSet.size();
+		int owlEquivalentClassesAxiomSetSize = owlEquivalentClassesAxiomSet.size();
+		int owlDisjointClassesAxiomSetSize = owlDisjointClassesAxiomSet.size();
+		int owlDisjointUnionAxiomSetSize = owlDisjointUnionAxiomSet.size();
+		int owlDifferentIndividualsAxiomSetSize = owlDifferentIndividualsAxiomSet.size();
+		int owlSameIndividualAxiomSetSize = owlSameIndividualAxiomSet.size();
+		int owlClassAssertionAxiomSetSize = owlClassAssertionAxiomSet.size();
+		int owlObjectPropertyAssertionAxiomSetSize = owlObjectPropertyAssertionAxiomSet.size();
+		int owlNegativeObjectPropertyAssertionAxiomSetSize = owlNegativeObjectPropertyAssertionAxiomSet.size();
+		int owlSubObjectPropertyOfAxiomSetSize = owlSubObjectPropertyOfAxiomSet.size();
+		int owlEquivalentObjectPropertyAxiomSetSize = owlEquivalentObjectPropertyAxiomSet.size();
+		int owlDisjointObjectPropertiesSetSize = owlDisjointObjectPropertiesSet.size();
+		int owlInverseObjectPropertiesAxiomSetSize = owlInverseObjectPropertiesAxiomSet.size();
+		int owlObjectPropertyDomainAxiomSetSize = owlObjectPropertyDomainAxiomSet.size();
+		int owlObjectPropertyRangeAxiomSetSize = owlObjectPropertyRangeAxiomSet.size();
+		int owlFunctionalObjectPropertyAxiomSetSize = owlFunctionalObjectPropertyAxiomSet.size();
+		int owlInverseFunctionalObjectPropertyAxiomSetSize = owlInverseFunctionalObjectPropertyAxiomSet.size();
+		int owlReflexiveObjectPropertyAxiomSetSize = owlReflexiveObjectPropertyAxiomSet.size();
+		int owlIrreflexiveObjectPropertyAxiomSetSize = owlIrreflexiveObjectPropertyAxiomSet.size();
+		int owlSymmetricObjectPropertyAxiomSetSize = owlSymmetricObjectPropertyAxiomSet.size();
+		int owlAsymmetricObjectPropertyAxiomSetSize = owlAsymmetricObjectPropertyAxiomSet.size();
+		int owlTransitiveObjectPropertyAxiomSetSize = owlTransitiveObjectPropertyAxiomSet.size();
+
+		logger.info("OWLSubClassOfAxiomSetSize: " + owlSubClassOfAxiomSetSize);
+		logger.info("OWLEquivalentClassesAxiomSetSize: " + owlEquivalentClassesAxiomSetSize);
+		logger.info("OWLDisjointClassesAxiomSetSize: " + owlDisjointClassesAxiomSetSize);
+		logger.info("OWLDisjointUnionAxiomSetSize: " + owlDisjointUnionAxiomSetSize);
+		logger.info("OWLDifferentIndividualsAxiomSetSize: " + owlDifferentIndividualsAxiomSetSize);
+		logger.info("OWLSameIndividualAxiomSetSize: " + owlSameIndividualAxiomSetSize);
+		logger.info("OWLClassAssertionAxiomSetSize: " + owlClassAssertionAxiomSetSize);
+		logger.info("OWLObjectPropertyAssertionAxiomSetSize: " + owlObjectPropertyAssertionAxiomSetSize);
+		logger.info(
+				"OWLNegativeObjectPropertyAssertionAxiomSetSize: " + owlNegativeObjectPropertyAssertionAxiomSetSize);
+		logger.info("OWLSubObjectPropertyOfAxiomSetSize: " + owlSubObjectPropertyOfAxiomSetSize);
+		logger.info("OWLEquivalentObjectPropertyAxiomSetSize: " + owlEquivalentObjectPropertyAxiomSetSize);
+		logger.info("OWLDisjointObjectPropertiesSetSize: " + owlDisjointObjectPropertiesSetSize);
+		logger.info("OWLInverseObjectPropertiesAxiomSetSize: " + owlInverseObjectPropertiesAxiomSetSize);
+		logger.info("OWLObjectPropertyDomainAxiomSetSize: " + owlObjectPropertyDomainAxiomSetSize);
+		logger.info("OWLObjectPropertyRangeAxiomSetSize: " + owlObjectPropertyRangeAxiomSetSize);
+		logger.info("OWLFunctionalObjectPropertyAxiomSetSize: " + owlFunctionalObjectPropertyAxiomSetSize);
+		logger.info(
+				"OWLInverseFunctionalObjectPropertyAxiomSetSize: " + owlInverseFunctionalObjectPropertyAxiomSetSize);
+		logger.info("OWLReflexiveObjectPropertyAxiomSetSize: " + owlReflexiveObjectPropertyAxiomSetSize);
+		logger.info("OWLIrreflexiveObjectPropertyAxiomSetSize: " + owlIrreflexiveObjectPropertyAxiomSetSize);
+		logger.info("OWLSymmetricObjectPropertyAxiomSetSize: " + owlSymmetricObjectPropertyAxiomSetSize);
+		logger.info("OWLAsymmetricObjectPropertyAxiomSetSize: " + owlAsymmetricObjectPropertyAxiomSetSize);
+		logger.info("OWLTransitiveObjectPropertyAxiomSetSize: " + owlTransitiveObjectPropertyAxiomSetSize);
+
+		logger.info("----------------------------------------------------------------");
 
 	}
 

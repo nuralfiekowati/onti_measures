@@ -6,13 +6,20 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLOntology;
 
 class MI {
 
-	public static void Imi_measure(OWLOntology ontology, Set<Explanation<OWLAxiom>> explanations) {
+	private static final Logger logger = Logger.getLogger(MI.class);
+
+	private MI() {
+		throw new IllegalStateException("MI");
+	}
+
+	public static void imiMeasure(OWLOntology ontology, Set<Explanation<OWLAxiom>> explanations) {
 
 		long startTime = System.currentTimeMillis();
 
@@ -27,12 +34,13 @@ class MI {
 
 			System.out.println("2. MI-INCONSISTENCY MEASURE I_mi: " + sizeOfMI);
 			System.out.println("-----------------------------------------------------------------------------");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
-		TotalTimeExecution.totalTime(startTime);
+			TotalTimeExecution.totalTime(startTime);
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			logger.error(e);
+		}
 
 	}
 }

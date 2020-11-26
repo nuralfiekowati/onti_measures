@@ -4,9 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.owlapi.model.OWLAxiom;
 import org.semanticweb.owlapi.model.OWLClass;
 import org.semanticweb.owlapi.model.OWLNamedIndividual;
@@ -14,14 +14,21 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 
 class Mv {
 
+	private static final Logger logger = Logger.getLogger(Mv.class);
+
 	static Set<OWLClass> ontologyClass = null;
 	static Set<OWLNamedIndividual> ontologyIndividual = null;
 	static Set<OWLObjectProperty> ontologyObjectProperty = null;
 
-	static float cardOfSignInK, cardOfSignAxiomMIKUnion;
+	static float cardOfSignInK;
+	static float cardOfSignAxiomMIKUnion;
 
-	public static void Imv_measure(HashSet<OWLClass> MIKClassSet, HashSet<OWLNamedIndividual> MIKIndividualSet,
-			HashSet<OWLObjectProperty> MIKObjectPropertySet, HashSet<OWLAxiom> ontologyAxiomSet) {
+	private Mv() {
+		throw new IllegalStateException("Mv");
+	}
+
+	public static void imvMeasure(Set<OWLClass> mikClassSet, Set<OWLNamedIndividual> mikIndividualSet,
+			Set<OWLObjectProperty> mikObjectPropertySet, Set<OWLAxiom> ontologyAxiomSet) {
 
 		long startTime = System.currentTimeMillis();
 
@@ -31,48 +38,53 @@ class Mv {
 			PrintStream ps = new PrintStream(fos);
 			System.setOut(ps);
 
-			int cardOfMIKClassSet = MIKClassSet.size();
-			int cardOfMIKIndividualSet = MIKIndividualSet.size();
-			int cardOfMIKObjectPropertySet = MIKObjectPropertySet.size();
+			int cardOfMIKClassSet = mikClassSet.size();
+			int cardOfMIKIndividualSet = mikIndividualSet.size();
+			int cardOfMIKObjectPropertySet = mikObjectPropertySet.size();
 
 			System.out.println("MIKClassSet Size: " + cardOfMIKClassSet);
 			System.out.println("MIKIndividualSet Size: " + cardOfMIKIndividualSet);
 			System.out.println("MIKObjectPropertySet Size: " + cardOfMIKObjectPropertySet);
 
-			float cardOfSignAxiomMIKUnion = cardOfMIKClassSet + cardOfMIKIndividualSet + cardOfMIKObjectPropertySet;
+			int cardOfSignAxiomMIKUnion = cardOfMIKClassSet + cardOfMIKIndividualSet + cardOfMIKObjectPropertySet;
+			float cardOfSignAxiomMIKUnionFloat = (float) cardOfSignAxiomMIKUnion;
 
 			for (OWLAxiom theAxiom : ontologyAxiomSet) {
-				ontologyClass = (Set<OWLClass>) theAxiom.getClassesInSignature();
-				ontologyIndividual = (Set<OWLNamedIndividual>) theAxiom.getIndividualsInSignature();
-				ontologyObjectProperty = (Set<OWLObjectProperty>) theAxiom.getObjectPropertiesInSignature();
+				ontologyClass = theAxiom.getClassesInSignature();
+				ontologyIndividual = theAxiom.getIndividualsInSignature();
+				ontologyObjectProperty = theAxiom.getObjectPropertiesInSignature();
 
 				for (OWLClass theClass2 : ontologyClass) {
-					MIKClassSet.add(theClass2);
+					mikClassSet.add(theClass2);
 				}
 				for (OWLNamedIndividual theIndividual2 : ontologyIndividual) {
-					MIKIndividualSet.add(theIndividual2);
+					mikIndividualSet.add(theIndividual2);
 				}
 				for (OWLObjectProperty theObjectProperty2 : ontologyObjectProperty) {
 
-					MIKObjectPropertySet.add(theObjectProperty2);
+					mikObjectPropertySet.add(theObjectProperty2);
 				}
 			}
 
-			float cardOfSignInK = MIKClassSet.size() + MIKIndividualSet.size() + MIKObjectPropertySet.size();
-			System.out.println("Cardinality of signatures in axiom union: " + cardOfSignAxiomMIKUnion);
-			System.out.println("Cardinality of signatures in K: " + cardOfSignInK);
-			if ((cardOfSignAxiomMIKUnion == 0) && (cardOfSignInK == 0)) {
+			int cardOfSignInK = mikClassSet.size() + mikIndividualSet.size() + mikObjectPropertySet.size();
+			float cardOfSignInKFloat = (float) cardOfSignInK;
+
+			System.out.println("Cardinality of signatures in axiom union: " + cardOfSignAxiomMIKUnionFloat);
+			System.out.println("Cardinality of signatures in K: " + cardOfSignInKFloat);
+			if ((cardOfSignAxiomMIKUnionFloat == 0) && (cardOfSignInKFloat == 0)) {
 				System.out.println("9. MV INCONSISTENCY MEASURE I_mv: 0 ");
 			} else {
-				System.out.println("9. MV INCONSISTENCY MEASURE I_mv: " + cardOfSignAxiomMIKUnion / cardOfSignInK);
+				System.out.println(
+						"9. MV INCONSISTENCY MEASURE I_mv: " + cardOfSignAxiomMIKUnionFloat / cardOfSignInKFloat);
 			}
 			System.out.println("***************************************************************");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
-		TotalTimeExecution.totalTime(startTime);
+			TotalTimeExecution.totalTime(startTime);
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			logger.error(e);
+		}
 
 	}
 

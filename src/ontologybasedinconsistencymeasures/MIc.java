@@ -6,17 +6,25 @@ import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Set;
+
+import org.apache.log4j.Logger;
 import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owlapi.model.OWLAxiom;
 
 class MIc {
+
+	private static final Logger logger = Logger.getLogger(MIc.class);
 
 	static float onePerSizeOfM;
 	static float sumOfSize = 0;
 	static float sizeOfM;
 	static ArrayList<Integer> explanationSizeList = new ArrayList<>();
 
-	public static void Imic_measure(Set<OWLAxiom> arrayOfExplanation, Set<Explanation<OWLAxiom>> explanations) {
+	private MIc() {
+		throw new IllegalStateException("MIc");
+	}
+
+	public static void imicMeasure(Set<OWLAxiom> arrayOfExplanation, Set<Explanation<OWLAxiom>> explanations) {
 
 		long startTime = System.currentTimeMillis();
 
@@ -40,12 +48,13 @@ class MIc {
 
 			System.out.println("3. MI^C-INCONSISTENCY MEASURE I_mic: " + sumOfSize);
 			System.out.println("-----------------------------------------------------------------------------");
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 
-		TotalTimeExecution.totalTime(startTime);
+			TotalTimeExecution.totalTime(startTime);
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			logger.error(e);
+		}
 
 	}
 }

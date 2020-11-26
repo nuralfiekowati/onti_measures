@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.HermiT.Reasoner.ReasonerFactory;
 import org.semanticweb.owlapi.apibinding.OWLManager;
 import org.semanticweb.owlapi.model.AddAxiom;
@@ -24,17 +25,24 @@ import org.semanticweb.owlapi.reasoner.TimeOutException;
 
 class Nc {
 
-	static OWLOntologyManager manager6 = OWLManager.createOWLOntologyManager();
+	private static final Logger logger = Logger.getLogger(Nc.class);
+
+	static OWLOntologyManager manager6 = null;
 	static OWLReasoner reasoner6;
 	static AddAxiom addAxiom6;
 	static Set<OWLAxiom> axiomsToRemove6;
 	static ArrayList<Integer> consistentSubsetSize = new ArrayList<>();
-	static HashSet<Set<OWLAxiom>> inconsistentSubset = new HashSet<Set<OWLAxiom>>();
-	static HashSet<Set<OWLAxiom>> consistentSubset = new HashSet<Set<OWLAxiom>>();
+	static Set<Set<OWLAxiom>> inconsistentSubset = new HashSet<>();
+	static Set<Set<OWLAxiom>> consistentSubset = new HashSet<>();
 
-	static int sizeOfK, maxOfSizeK;
+	static int sizeOfK;
+	static int maxOfSizeK;
 
-	public static void Inc_measure(HashSet<OWLAxiom> ontologyAxiomSet, ReasonerFactory hermitRf6,
+	private Nc() {
+		throw new IllegalStateException("Nc");
+	}
+
+	public static void incMeasure(Set<OWLAxiom> ontologyAxiomSet, ReasonerFactory hermitRf6,
 			OWLReasonerFactory jFactRf6) {
 
 		long startTime = System.currentTimeMillis();
@@ -45,7 +53,7 @@ class Nc {
 			PrintStream ps = new PrintStream(fos);
 			System.setOut(ps);
 
-			OWLOntology axiomOntology6 = manager6.createOntology();
+			OWLOntology axiomOntology6 = null;
 
 			for (Set<OWLAxiom> s : PowerSetCount.powerSet(ontologyAxiomSet)) {
 				manager6 = OWLManager.createOWLOntologyManager();
@@ -71,19 +79,17 @@ class Nc {
 				System.out.println("C: " + s);
 				System.out.println("Is C consistent? " + reasoner6.isConsistent());
 
-				if (reasoner6.isConsistent() == true) {
+				if (reasoner6.isConsistent()) {
 					consistentSubset.add(s);
 					consistentSubsetSize.add(s.size());
-				}
-
-				if (reasoner6.isConsistent() == false) {
+				} else {
 					inconsistentSubset.add(s);
 				}
 			}
 
 			System.out.println("Size of consistent subset size: " + consistentSubsetSize.size());
 
-			if (consistentSubsetSize.size() != 0) {
+			if (!consistentSubsetSize.isEmpty()) {
 				int maxOfSizeK = Collections.max(consistentSubsetSize);
 				System.out.println("Size of K: " + SizeOfK.sizeK(ontologyAxiomSet));
 				System.out.println("Max of size K: " + maxOfSizeK);
@@ -97,24 +103,13 @@ class Nc {
 				System.out.println("-----------------------------------------------------------------------------");
 			}
 
-		} catch (OWLOntologyRenameException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TimeOutException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (ReasonerInterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (OWLOntologyCreationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+			TotalTimeExecution.totalTime(startTime);
 
-		TotalTimeExecution.totalTime(startTime);
+		} catch (OWLOntologyRenameException | TimeOutException | ReasonerInterruptedException
+				| OWLOntologyCreationException | FileNotFoundException e) {
+			e.printStackTrace();
+			logger.error(e);
+		}
 
 	}
 

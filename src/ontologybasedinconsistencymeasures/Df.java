@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.semanticweb.HermiT.Reasoner.ReasonerFactory;
 import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owlapi.apibinding.OWLManager;
@@ -25,31 +26,37 @@ import org.semanticweb.owlapi.reasoner.TimeOutException;
 
 class Df {
 
+	private static final Logger logger = Logger.getLogger(Df.class);
+
 	static OWLOntologyManager manager6 = OWLManager.createOWLOntologyManager();
 	static OWLReasoner reasoner6;
 	static AddAxiom addAxiom6;
 	static Set<OWLAxiom> axiomsToRemove6;
 	static ArrayList<Integer> explanationSizeList = new ArrayList<>();
 	static ArrayList<Integer> consistentSubsetSize = new ArrayList<>();
-	static HashSet<Set<OWLAxiom>> consistentSubset = new HashSet<Set<OWLAxiom>>();
-	static HashSet<Set<OWLAxiom>> inconsistentSubset = new HashSet<Set<OWLAxiom>>();
-	static ArrayList<Float> RiKarray = new ArrayList<>();
+	static Set<Set<OWLAxiom>> consistentSubset = new HashSet<>();
+	static Set<Set<OWLAxiom>> inconsistentSubset = new HashSet<>();
+	static ArrayList<Float> riKarray = new ArrayList<>();
 
 	static int iPlus1;
-	static float Msize;
-	static float Csize;
-	static float MsizePlusCsize;
-	static float RiK;
-	static float OneMinusRiK;
-	static float RiKDivi;
+	static float mSize;
+	static float cSize;
+	static float mSizePlusCsize;
+	static float riK;
+	static float oneMinusRiK;
+	static float riKDivi;
 	static float total = 1;
 	static float sizeOfM;
 
-	public static void Idf_measure(HashSet<OWLAxiom> ontologyAxiomSet, Set<OWLAxiom> arrayOfExplanation,
+	private Df() {
+		throw new IllegalStateException("Df");
+	}
+
+	public static void idfMeasure(Set<OWLAxiom> ontologyAxiomSet, Set<OWLAxiom> arrayOfExplanation,
 			Set<Explanation<OWLAxiom>> explanations, ReasonerFactory hermitRf6, OWLReasonerFactory jFactRf6) {
 
 		long startTime = System.currentTimeMillis();
-		int Ksize = SizeOfK.sizeK(ontologyAxiomSet);
+		int kSize = SizeOfK.sizeK(ontologyAxiomSet);
 
 		try {
 
@@ -58,7 +65,7 @@ class Df {
 			PrintStream ps = new PrintStream(fos);
 			System.setOut(ps);
 
-			OWLOntology axiomOntology6 = manager6.createOntology();
+			OWLOntology axiomOntology6 = null;
 
 			for (int i = 0; i < explanations.size(); i++) {
 				sizeOfM = arrayOfExplanation.size();
@@ -89,43 +96,40 @@ class Df {
 				System.out.println("C: " + s);
 				System.out.println("Is C consistent? " + reasoner6.isConsistent());
 
-				if (reasoner6.isConsistent() == true) {
+				if (reasoner6.isConsistent()) {
 					consistentSubset.add(s);
 					consistentSubsetSize.add(s.size());
-				}
-
-				if (reasoner6.isConsistent() == false) {
+				} else {
 					inconsistentSubset.add(s);
 				}
 			}
 
-			for (int i = 0; i < Ksize; i++) {
+			for (int i = 0; i < kSize; i++) {
 
 				iPlus1 = i + 1;
 
-				Msize = Collections.frequency(explanationSizeList, iPlus1);
-				Csize = Collections.frequency(consistentSubsetSize, iPlus1);
-				System.out.println("Msize of " + iPlus1 + ": " + Msize);
-				System.out.println("Csize of " + iPlus1 + ": " + Csize);
-				MsizePlusCsize = Msize + Csize;
-				if (Msize == 0) {
-					RiK = 0;
+				mSize = Collections.frequency(explanationSizeList, iPlus1);
+				cSize = Collections.frequency(consistentSubsetSize, iPlus1);
+				System.out.println("Msize of " + iPlus1 + ": " + mSize);
+				System.out.println("Csize of " + iPlus1 + ": " + cSize);
+				mSizePlusCsize = mSize + cSize;
+				if (mSize == 0) {
+					riK = 0;
 				} else {
-					RiK = Msize / MsizePlusCsize;
-					System.out.println("Lalala");
+					riK = mSize / mSizePlusCsize;
 				}
 
-				System.out.println("R" + iPlus1 + "(K): " + Msize + "/" + MsizePlusCsize + "= " + RiK);
-				RiKDivi = RiK / (float) iPlus1;
-				System.out.println("RiKDivi: " + RiKDivi);
-				OneMinusRiK = (float) 1 - RiKDivi;
-				System.out.println("(1 - RiK): " + OneMinusRiK);
+				System.out.println("R" + iPlus1 + "(K): " + mSize + "/" + mSizePlusCsize + "= " + riK);
+				riKDivi = riK / (float) iPlus1;
+				System.out.println("RiKDivi: " + riKDivi);
+				oneMinusRiK = (float) 1 - riKDivi;
+				System.out.println("(1 - RiK): " + oneMinusRiK);
 
-				RiKarray.add(OneMinusRiK);
+				riKarray.add(oneMinusRiK);
 			}
 
-			System.out.println("Number of one minus RiK: " + RiKarray.size());
-			for (float value : RiKarray) {
+			System.out.println("Number of one minus RiK: " + riKarray.size());
+			for (float value : riKarray) {
 				System.out.println("Each value in one minus RiK: " + value);
 				total *= value;
 			}
@@ -134,23 +138,14 @@ class Df {
 			System.out.println("1 - Total of multiplication of one minus RiK: " + idf);
 			System.out.println("4. Df INCONSISTENCY MEASURE I_df: " + idf);
 			System.out.println("-----------------------------------------------------------------------------");
-		} catch (OWLOntologyRenameException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (TimeOutException f) {
-			// TODO Auto-generated catch block
-			f.printStackTrace();
-		} catch (ReasonerInterruptedException g) {
-			// TODO Auto-generated catch block
-			g.printStackTrace();
-		} catch (OWLOntologyCreationException h) {
-			// TODO Auto-generated catch block
-			h.printStackTrace();
-		} catch (FileNotFoundException i) {
-			i.printStackTrace();
-		}
 
-		TotalTimeExecution.totalTime(startTime);
+			TotalTimeExecution.totalTime(startTime);
+
+		} catch (OWLOntologyRenameException | TimeOutException | ReasonerInterruptedException
+				| OWLOntologyCreationException | FileNotFoundException e) {
+			e.printStackTrace();
+			logger.error(e);
+		}
 
 	}
 }
