@@ -19,12 +19,16 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyRenameException;
+import org.semanticweb.owlapi.reasoner.ConsoleProgressMonitor;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.ReasonerInterruptedException;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.reasoner.TimeOutException;
+
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
+import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
 
 class MC {
 
@@ -33,6 +37,8 @@ class MC {
 	static OWLOntologyManager manager6 = OWLManager.createOWLOntologyManager();
 	static OWLReasoner reasoner6;
 	static OWLReasoner reasoner8;
+	static PelletReasoner pelletReasoner6;
+	static PelletReasoner pelletReasoner8;
 	static AddAxiom addAxiom6;
 	static Set<OWLAxiom> axiomsToRemove6;
 	static Set<OWLAxiom> ontologyAxiomsCausingUnsatisfiable = new HashSet<>();
@@ -41,6 +47,7 @@ class MC {
 	static ArrayList<Set<OWLAxiom>> mckCandidate = new ArrayList<>();
 	static Set<Set<OWLAxiom>> inconsistentSubset = new HashSet<>();
 	static Set<Set<OWLAxiom>> consistentSubset = new HashSet<>();
+	static ConsoleProgressMonitor progressMonitor = new ConsoleProgressMonitor();
 
 	static int mcSize;
 	static float scSize;
@@ -51,9 +58,10 @@ class MC {
 	}
 
 	public static void imcMeasure(Set<Explanation<OWLAxiom>> explanations, Set<OWLAxiom> ontologyAxiomSet,
-			ReasonerFactory hermitRf6, OWLReasonerFactory jFactRf6, ReasonerFactory hermitRf8,
-			OWLReasonerFactory jFactRf8, Configuration configurationHermit,
-			OWLReasonerConfiguration configurationJFact) {
+			ReasonerFactory hermitRf6, OWLReasonerFactory jFactRf6, PelletReasonerFactory pelletRf6,
+			ReasonerFactory hermitRf8, OWLReasonerFactory jFactRf8, PelletReasonerFactory pelletRf8,
+			Configuration configurationHermit, OWLReasonerConfiguration configurationJFact,
+			OWLReasonerConfiguration configurationPellet) {
 
 		long startTime = System.currentTimeMillis();
 
@@ -80,21 +88,44 @@ class MC {
 					manager6.applyChange(addAxiom6);
 				}
 
-				if (hermitRf6 == null) {
+				if (hermitRf6 != null) {
+					reasoner6 = hermitRf6.createReasoner(axiomOntology6); // without configuration
+
+					System.out.println("C: " + s);
+					System.out.println("Is C consistent? " + reasoner6.isConsistent());
+
+					if (reasoner6.isConsistent()) {
+						consistentSubset.add(s);
+						consistentSubsetSize.add(s.size());
+					} else {
+						inconsistentSubset.add(s);
+					}
+				} else if (jFactRf6 != null) {
 					reasoner6 = jFactRf6.createReasoner(axiomOntology6);
-				} else {
-					reasoner6 = hermitRf6.createReasoner(axiomOntology6);
+
+					System.out.println("C: " + s);
+					System.out.println("Is C consistent? " + reasoner6.isConsistent());
+
+					if (reasoner6.isConsistent()) {
+						consistentSubset.add(s);
+						consistentSubsetSize.add(s.size());
+					} else {
+						inconsistentSubset.add(s);
+					}
+				} else if (pelletRf6 != null) {
+					pelletReasoner6 = pelletRf6.createReasoner(axiomOntology6);
+
+					System.out.println("C: " + s);
+					System.out.println("Is C consistent? " + pelletReasoner6.isConsistent());
+
+					if (pelletReasoner6.isConsistent()) {
+						consistentSubset.add(s);
+						consistentSubsetSize.add(s.size());
+					} else {
+						inconsistentSubset.add(s);
+					}
 				}
 
-				System.out.println("C: " + s);
-				System.out.println("Is C consistent? " + reasoner6.isConsistent());
-
-				if (reasoner6.isConsistent()) {
-					consistentSubset.add(s);
-					consistentSubsetSize.add(s.size());
-				} else {
-					inconsistentSubset.add(s);
-				}
 			}
 
 			System.out.println("Size of consistent subset size: " + consistentSubsetSize.size());
@@ -124,11 +155,13 @@ class MC {
 			Set<OWLAxiom> axiomsToRemove8;
 			AddAxiom addAxiom8;
 
-			if (configurationHermit == null) {
-				configurationJFact = new SimpleConfiguration();
-			} else {
+			if (configurationHermit != null) {
 				configurationHermit = new Configuration();
 				configurationHermit.throwInconsistentOntologyException = false;
+			} else if (configurationJFact != null) {
+				configurationJFact = new SimpleConfiguration();
+			} else if (configurationPellet != null) {
+				configurationPellet = new SimpleConfiguration(progressMonitor);
 			}
 
 			for (OWLAxiom theAxiom : ontologyAxiomSet) {
@@ -145,18 +178,36 @@ class MC {
 				addAxiom8 = new AddAxiom(axiomOntology8, theAxiom);
 				manager8.applyChange(addAxiom8);
 
-				if (hermitRf8 == null) {
-					reasoner8 = jFactRf8.createReasoner(axiomOntology8, configurationJFact); // for
-				} else {
-					reasoner8 = hermitRf8.createReasoner(axiomOntology8, configurationHermit); // for
-				}
+				if (hermitRf8 != null) {
+					reasoner8 = hermitRf8.createReasoner(axiomOntology8, configurationHermit);
 
-				System.out.println("The axiom: " + theAxiom);
-				System.out
-						.println("Is the axiom (" + theAxiom + ") consistent/satisfiable? " + reasoner8.isConsistent());
+					System.out.println("The axiom: " + theAxiom);
+					System.out.println(
+							"Is the axiom (" + theAxiom + ") consistent/satisfiable? " + reasoner8.isConsistent());
 
-				if (!reasoner8.isConsistent()) {
-					ontologyAxiomsCausingUnsatisfiable.add(theAxiom);
+					if (!reasoner8.isConsistent()) {
+						ontologyAxiomsCausingUnsatisfiable.add(theAxiom);
+					}
+				} else if (jFactRf8 != null) {
+					reasoner8 = jFactRf8.createReasoner(axiomOntology8, configurationJFact);
+
+					System.out.println("The axiom: " + theAxiom);
+					System.out.println(
+							"Is the axiom (" + theAxiom + ") consistent/satisfiable? " + reasoner8.isConsistent());
+
+					if (!reasoner8.isConsistent()) {
+						ontologyAxiomsCausingUnsatisfiable.add(theAxiom);
+					}
+				} else if (pelletRf8 != null) {
+					pelletReasoner8 = pelletRf8.createReasoner(axiomOntology8, configurationPellet);
+
+					System.out.println("The axiom: " + theAxiom);
+					System.out.println("Is the axiom (" + theAxiom + ") consistent/satisfiable? "
+							+ pelletReasoner8.isConsistent());
+
+					if (!pelletReasoner8.isConsistent()) {
+						ontologyAxiomsCausingUnsatisfiable.add(theAxiom);
+					}
 				}
 
 			}

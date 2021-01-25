@@ -23,12 +23,16 @@ import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.ReasonerInterruptedException;
 import org.semanticweb.owlapi.reasoner.TimeOutException;
 
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
+import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
+
 class Nc {
 
 	private static final Logger logger = Logger.getLogger(Nc.class);
 
 	static OWLOntologyManager manager6 = null;
 	static OWLReasoner reasoner6;
+	static PelletReasoner pelletReasoner6;
 	static AddAxiom addAxiom6;
 	static Set<OWLAxiom> axiomsToRemove6;
 	static ArrayList<Integer> consistentSubsetSize = new ArrayList<>();
@@ -43,7 +47,7 @@ class Nc {
 	}
 
 	public static void incMeasure(Set<OWLAxiom> ontologyAxiomSet, ReasonerFactory hermitRf6,
-			OWLReasonerFactory jFactRf6) {
+			OWLReasonerFactory jFactRf6, PelletReasonerFactory pelletRf6) {
 
 		long startTime = System.currentTimeMillis();
 
@@ -70,20 +74,42 @@ class Nc {
 					manager6.applyChange(addAxiom6);
 				}
 
-				if (hermitRf6 == null) {
+				if (hermitRf6 != null) {
+					reasoner6 = hermitRf6.createReasoner(axiomOntology6); // without configuration
+
+					System.out.println("C: " + s);
+					System.out.println("Is C consistent? " + reasoner6.isConsistent());
+
+					if (reasoner6.isConsistent()) {
+						consistentSubset.add(s);
+						consistentSubsetSize.add(s.size());
+					} else {
+						inconsistentSubset.add(s);
+					}
+				} else if (jFactRf6 != null) {
 					reasoner6 = jFactRf6.createReasoner(axiomOntology6);
-				} else {
-					reasoner6 = hermitRf6.createReasoner(axiomOntology6);
-				}
 
-				System.out.println("C: " + s);
-				System.out.println("Is C consistent? " + reasoner6.isConsistent());
+					System.out.println("C: " + s);
+					System.out.println("Is C consistent? " + reasoner6.isConsistent());
 
-				if (reasoner6.isConsistent()) {
-					consistentSubset.add(s);
-					consistentSubsetSize.add(s.size());
-				} else {
-					inconsistentSubset.add(s);
+					if (reasoner6.isConsistent()) {
+						consistentSubset.add(s);
+						consistentSubsetSize.add(s.size());
+					} else {
+						inconsistentSubset.add(s);
+					}
+				} else if (pelletRf6 != null) {
+					pelletReasoner6 = pelletRf6.createReasoner(axiomOntology6);
+
+					System.out.println("C: " + s);
+					System.out.println("Is C consistent? " + pelletReasoner6.isConsistent());
+
+					if (pelletReasoner6.isConsistent()) {
+						consistentSubset.add(s);
+						consistentSubsetSize.add(s.size());
+					} else {
+						inconsistentSubset.add(s);
+					}
 				}
 			}
 

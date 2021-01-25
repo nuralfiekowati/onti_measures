@@ -7,6 +7,8 @@ import java.util.Set;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
+import org.semanticweb.HermiT.Configuration;
+import org.semanticweb.HermiT.Reasoner.ReasonerFactory;
 import org.semanticweb.owl.explanation.api.Explanation;
 import org.semanticweb.owl.explanation.api.ExplanationException;
 import org.semanticweb.owl.explanation.api.ExplanationGenerator;
@@ -23,17 +25,12 @@ import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.reasoner.InconsistentOntologyException;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
-import org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration;
-import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.ReasonerInterruptedException;
-import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.reasoner.TimeOutException;
 
-import uk.ac.manchester.cs.jfact.JFactFactory;
+public class InconsistencyMeasureHermiT {
 
-public class InconsistencyMeasureJFact {
-
-	private static final Logger logger = Logger.getLogger(InconsistencyMeasureJFact.class);
+	private static final Logger logger = Logger.getLogger(InconsistencyMeasureHermiT.class);
 
 	static Set<OWLAxiom> arrayOfExplanation = null;
 	static Set<Set<OWLAxiom>> arrayOfExplanationSet = new HashSet<>(3000000, 1000000F);
@@ -46,10 +43,10 @@ public class InconsistencyMeasureJFact {
 	static Set<OWLNamedIndividual> inconsistentIndividual = null;
 	static Set<OWLObjectProperty> inconsistentObjectProperty = null;
 	static Set<OWLAxiom> ontologyAxiomSet = new HashSet<>(3000000, 1000000F);
-	static OWLReasonerFactory rf3 = new JFactFactory();
-	static OWLReasonerFactory rf5 = new JFactFactory();
-	static OWLReasonerFactory rf6 = new JFactFactory();
-	static OWLReasonerFactory rf8 = new JFactFactory();
+	static ReasonerFactory rf3 = new ReasonerFactory();
+	static ReasonerFactory rf5 = new ReasonerFactory();
+	static ReasonerFactory rf6 = new ReasonerFactory();
+	static ReasonerFactory rf8 = new ReasonerFactory();
 
 	public static void main(String[] args) throws Exception {
 
@@ -58,8 +55,8 @@ public class InconsistencyMeasureJFact {
 		try {
 			File inputOntologyFile = new File("data/knowledgebaseK4.owl");
 
-			// ReasonerFactory for JFact
-			OWLReasonerFactory rf = new JFactFactory();
+			// ReasonerFactory for Hermit
+			ReasonerFactory rf = new ReasonerFactory();
 
 			OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 
@@ -67,21 +64,22 @@ public class InconsistencyMeasureJFact {
 
 			OWLOntology ontology = manager.loadOntologyFromOntologyDocument(inputOntologyFile);
 
-			// Configuration for JFact
-			OWLReasonerConfiguration configuration = new SimpleConfiguration();
+			// Configuration for Hermit
+			Configuration configuration = new Configuration();
+			configuration.throwInconsistentOntologyException = false;
 
-			// OWLReasoner for JFact (the format is also used by Hermit as well)
+			// OWLReasoner for Hermit (the format is also used by JFact as well)
 			OWLReasoner reasoner = rf.createReasoner(ontology, configuration);
 
 			logger.info("Is ontology (file name: " + inputOntologyFile + ") consistent? " + reasoner.isConsistent());
 
 			ExplanationGenerator<OWLAxiom> explainInconsistency = new InconsistentOntologyExplanationGeneratorFactory(
-					rf, 1000000000000000000L).createExplanationGenerator(ontology); // modified
+					rf, 1000000000000000000L).createExplanationGenerator(ontology);
 
 			// Set the limit of entailment should be here
 			Set<Explanation<OWLAxiom>> explanations = explainInconsistency
-					.getExplanations(df.getOWLSubClassOfAxiom(df.getOWLThing(), df.getOWLNothing()), 941); // set
-																											// the
+					.getExplanations(df.getOWLSubClassOfAxiom(df.getOWLThing(), df.getOWLNothing()), 941);
+
 			logger.info("Explanation of inconsistency (MI(K)): " + explanations);
 
 			SizeOfK.sizeK(ontologyAxiomSet);
@@ -99,7 +97,6 @@ public class InconsistencyMeasureJFact {
 
 				// arrayOfExplanation is M in MI(K)
 				arrayOfExplanation = explanation.getAxioms();
-
 				logger.info("-----------------------------------------------------------------------------");
 				logger.info("MI(K) subset: " + arrayOfExplanation);
 
@@ -137,14 +134,14 @@ public class InconsistencyMeasureJFact {
 			Drastic.idMeasure(reasoner);
 			MI.imiMeasure(ontology, explanations);
 			MIc.imicMeasure(arrayOfExplanation, explanations);
-			Df.idfMeasure(ontologyAxiomSet, arrayOfExplanation, explanations, null, rf6, null);
+			Df.idfMeasure(ontologyAxiomSet, arrayOfExplanation, explanations, rf6, null, null);
 			Problematic.ipMeasure(mikAxiomSet);
 			IR.iirMeasure(explanations, ontologyAxiomSet);
-			MC.imcMeasure(explanations, ontologyAxiomSet, null, rf6, null, null, rf8, null, null, configuration, null);
-			Nc.incMeasure(ontologyAxiomSet, null, rf6, null);
+			MC.imcMeasure(explanations, ontologyAxiomSet, rf6, null, null, rf8, null, null, configuration, null, null);
+			Nc.incMeasure(ontologyAxiomSet, rf6, null, null);
 			Mv.imvMeasure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet);
-			IDmcs.idMcsMeasure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet, null, rf3, null,
-					null, rf5, null, null, configuration, null);
+			IDmcs.idMcsMeasure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet, rf3, null, null,
+					rf5, null, null, configuration, null, null);
 
 			logger.info("***************************************************************");
 

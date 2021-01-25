@@ -21,19 +21,19 @@ import org.semanticweb.owlapi.model.OWLObjectProperty;
 import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
+import org.semanticweb.owlapi.reasoner.ConsoleProgressMonitor;
 import org.semanticweb.owlapi.reasoner.InconsistentOntologyException;
-import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration;
-import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.ReasonerInterruptedException;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.reasoner.TimeOutException;
 
-import uk.ac.manchester.cs.jfact.JFactFactory;
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
+import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
 
-public class InconsistencyMeasureJFact {
+public class InconsistencyMeasurePellet {
 
-	private static final Logger logger = Logger.getLogger(InconsistencyMeasureJFact.class);
+	private static final Logger logger = Logger.getLogger(InconsistencyMeasurePellet.class);
 
 	static Set<OWLAxiom> arrayOfExplanation = null;
 	static Set<Set<OWLAxiom>> arrayOfExplanationSet = new HashSet<>(3000000, 1000000F);
@@ -46,20 +46,20 @@ public class InconsistencyMeasureJFact {
 	static Set<OWLNamedIndividual> inconsistentIndividual = null;
 	static Set<OWLObjectProperty> inconsistentObjectProperty = null;
 	static Set<OWLAxiom> ontologyAxiomSet = new HashSet<>(3000000, 1000000F);
-	static OWLReasonerFactory rf3 = new JFactFactory();
-	static OWLReasonerFactory rf5 = new JFactFactory();
-	static OWLReasonerFactory rf6 = new JFactFactory();
-	static OWLReasonerFactory rf8 = new JFactFactory();
+	static PelletReasonerFactory rf3 = new PelletReasonerFactory();
+	static PelletReasonerFactory rf5 = new PelletReasonerFactory();
+	static PelletReasonerFactory rf6 = new PelletReasonerFactory();
+	static PelletReasonerFactory rf8 = new PelletReasonerFactory();
 
 	public static void main(String[] args) throws Exception {
 
 		BasicConfigurator.configure();
 
 		try {
-			File inputOntologyFile = new File("data/knowledgebaseK4.owl");
+			File inputOntologyFile = new File("data/WebOnt-description-logic-023.owl");
 
-			// ReasonerFactory for JFact
-			OWLReasonerFactory rf = new JFactFactory();
+			// ReasonerFactory for Pellet
+			PelletReasonerFactory rf = new PelletReasonerFactory();
 
 			OWLOntologyManager manager = OWLManager.createOWLOntologyManager();
 
@@ -67,13 +67,17 @@ public class InconsistencyMeasureJFact {
 
 			OWLOntology ontology = manager.loadOntologyFromOntologyDocument(inputOntologyFile);
 
-			// Configuration for JFact
-			OWLReasonerConfiguration configuration = new SimpleConfiguration();
+			ConsoleProgressMonitor progressMonitor = new ConsoleProgressMonitor();
 
-			// OWLReasoner for JFact (the format is also used by Hermit as well)
-			OWLReasoner reasoner = rf.createReasoner(ontology, configuration);
+			// Configuration for Pellet
+			OWLReasonerConfiguration configuration = new SimpleConfiguration(progressMonitor);
 
-			logger.info("Is ontology (file name: " + inputOntologyFile + ") consistent? " + reasoner.isConsistent());
+			// OWLReasoner for Pellet (the format is also used by HermiT and JFact as well)
+			PelletReasoner reasoner = rf.createReasoner(ontology, configuration);
+
+			boolean consistent = reasoner.isConsistent();
+
+			logger.info("Is ontology (file name: " + inputOntologyFile + ") consistent? " + consistent);
 
 			ExplanationGenerator<OWLAxiom> explainInconsistency = new InconsistentOntologyExplanationGeneratorFactory(
 					rf, 1000000000000000000L).createExplanationGenerator(ontology); // modified
@@ -137,14 +141,14 @@ public class InconsistencyMeasureJFact {
 			Drastic.idMeasure(reasoner);
 			MI.imiMeasure(ontology, explanations);
 			MIc.imicMeasure(arrayOfExplanation, explanations);
-			Df.idfMeasure(ontologyAxiomSet, arrayOfExplanation, explanations, null, rf6, null);
+			Df.idfMeasure(ontologyAxiomSet, arrayOfExplanation, explanations, null, null, rf6);
 			Problematic.ipMeasure(mikAxiomSet);
 			IR.iirMeasure(explanations, ontologyAxiomSet);
-			MC.imcMeasure(explanations, ontologyAxiomSet, null, rf6, null, null, rf8, null, null, configuration, null);
-			Nc.incMeasure(ontologyAxiomSet, null, rf6, null);
+			MC.imcMeasure(explanations, ontologyAxiomSet, null, null, rf6, null, null, rf8, null, null, configuration);
+			Nc.incMeasure(ontologyAxiomSet, null, null, rf6);
 			Mv.imvMeasure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet);
-			IDmcs.idMcsMeasure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet, null, rf3, null,
-					null, rf5, null, null, configuration, null);
+			IDmcs.idMcsMeasure(mikClassSet, mikIndividualSet, mikObjectPropertySet, ontologyAxiomSet, null, null, rf3,
+					null, null, rf5, null, null, configuration);
 
 			logger.info("***************************************************************");
 

@@ -21,12 +21,16 @@ import org.semanticweb.owlapi.model.OWLOntology;
 import org.semanticweb.owlapi.model.OWLOntologyCreationException;
 import org.semanticweb.owlapi.model.OWLOntologyManager;
 import org.semanticweb.owlapi.model.OWLOntologyRenameException;
+import org.semanticweb.owlapi.reasoner.ConsoleProgressMonitor;
 import org.semanticweb.owlapi.reasoner.OWLReasoner;
 import org.semanticweb.owlapi.reasoner.OWLReasonerConfiguration;
 import org.semanticweb.owlapi.reasoner.OWLReasonerFactory;
 import org.semanticweb.owlapi.reasoner.ReasonerInterruptedException;
 import org.semanticweb.owlapi.reasoner.SimpleConfiguration;
 import org.semanticweb.owlapi.reasoner.TimeOutException;
+
+import com.clarkparsia.pellet.owlapiv3.PelletReasoner;
+import com.clarkparsia.pellet.owlapiv3.PelletReasonerFactory;
 
 class IDmcs {
 
@@ -39,6 +43,11 @@ class IDmcs {
 	static OWLReasoner reasoner3;
 	static OWLReasoner reasoner5;
 
+	static PelletReasoner pelletReasoner3;
+	static PelletReasoner pelletReasoner5;
+
+	static ConsoleProgressMonitor progressMonitor = new ConsoleProgressMonitor();
+
 	static float cardOfSignInK;
 	static float cardOfSignAxiomMIKUnion;
 	static int cardOfMCSesSign;
@@ -49,8 +58,9 @@ class IDmcs {
 
 	public static void idMcsMeasure(Set<OWLClass> mikClassSet, Set<OWLNamedIndividual> mikIndividualSet,
 			Set<OWLObjectProperty> mikObjectPropertySet, Set<OWLAxiom> ontologyAxiomSet, ReasonerFactory hermitRf3,
-			OWLReasonerFactory jFactRf3, ReasonerFactory hermitRf5, OWLReasonerFactory jFactRf5,
-			Configuration configurationHermit, OWLReasonerConfiguration configurationJFact) {
+			OWLReasonerFactory jFactRf3, PelletReasonerFactory pelletRf3, ReasonerFactory hermitRf5,
+			OWLReasonerFactory jFactRf5, PelletReasonerFactory pelletRf5, Configuration configurationHermit,
+			OWLReasonerConfiguration configurationJFact, OWLReasonerConfiguration configurationPellet) {
 
 		long startTime = System.currentTimeMillis();
 
@@ -119,13 +129,19 @@ class IDmcs {
 
 				manager3.removeAxioms(axiomOntology3, subsetM);
 
-				if (hermitRf3 == null) {
-					reasoner3 = jFactRf3.createReasoner(axiomOntology3);
-				} else {
-					reasoner3 = hermitRf3.createReasoner(axiomOntology3);
-				}
+				if (hermitRf3 != null) {
+					reasoner3 = hermitRf3.createReasoner(axiomOntology3); // without configuration
 
-				System.out.println("Is K minus subset M consistent? " + reasoner3.isConsistent());
+					System.out.println("Is K minus subset M consistent? " + reasoner3.isConsistent());
+				} else if (jFactRf3 != null) {
+					reasoner3 = jFactRf3.createReasoner(axiomOntology3);
+
+					System.out.println("Is K minus subset M consistent? " + reasoner3.isConsistent());
+				} else if (pelletRf3 != null) {
+					pelletReasoner3 = pelletRf3.createReasoner(axiomOntology3);
+
+					System.out.println("Is K minus subset M consistent? " + pelletReasoner3.isConsistent());
+				}
 
 				// Condition 2 of MCS
 
@@ -143,11 +159,13 @@ class IDmcs {
 					manager5.applyChange(addAxiom5);
 				}
 
-				if (configurationHermit == null) {
-					configurationJFact = new SimpleConfiguration();
-				} else {
+				if (configurationHermit != null) {
 					configurationHermit = new Configuration();
 					configurationHermit.throwInconsistentOntologyException = false;
+				} else if (configurationJFact != null) {
+					configurationJFact = new SimpleConfiguration();
+				} else if (configurationPellet != null) {
+					configurationPellet = new SimpleConfiguration(progressMonitor);
 				}
 
 				ArrayList<String> consistentValue = new ArrayList<>();
@@ -157,25 +175,55 @@ class IDmcs {
 					manager5.removeAxioms(axiomOntology5, subsetM);
 					manager5.addAxiom(axiomOntology5, Ci);
 
-					if (hermitRf5 == null) {
-						reasoner5 = jFactRf5.createReasoner(axiomOntology5, configurationJFact);
-					} else {
+					if (hermitRf5 != null) {
 						reasoner5 = hermitRf5.createReasoner(axiomOntology5, configurationHermit);
-					}
 
-					System.out.println("Is K minus (subset M minus Ci) consistent? " + reasoner5.isConsistent());
+						System.out.println("Is K minus (subset M minus Ci) consistent? " + reasoner5.isConsistent());
 
-					if (reasoner5.isConsistent()) {
-						consistentValue.add("true");
-					} else {
-						consistentValue.add("false");
+						if (reasoner5.isConsistent()) {
+							consistentValue.add("true");
+						} else {
+							consistentValue.add("false");
+						}
+
+					} else if (jFactRf5 != null) {
+						reasoner5 = jFactRf5.createReasoner(axiomOntology5, configurationJFact);
+
+						System.out.println("Is K minus (subset M minus Ci) consistent? " + reasoner5.isConsistent());
+
+						if (reasoner5.isConsistent()) {
+							consistentValue.add("true");
+						} else {
+							consistentValue.add("false");
+						}
+
+					} else if (pelletRf5 != null) {
+						pelletReasoner5 = pelletRf5.createReasoner(axiomOntology5, configurationPellet);
+
+						System.out.println(
+								"Is K minus (subset M minus Ci) consistent? " + pelletReasoner5.isConsistent());
+
+						if (pelletReasoner5.isConsistent()) {
+							consistentValue.add("true");
+						} else {
+							consistentValue.add("false");
+						}
+
 					}
 
 				}
 
-				if (reasoner3.isConsistent() && ContainAllFalseQuestion.doesListContainAllFalse(consistentValue)) {
-					mcses.add(subsetM);
+				if (hermitRf5 != null || jFactRf5 != null) {
+					if (reasoner3.isConsistent() && ContainAllFalseQuestion.doesListContainAllFalse(consistentValue)) {
+						mcses.add(subsetM);
+					}
+				} else {
+					if (pelletReasoner3.isConsistent()
+							&& ContainAllFalseQuestion.doesListContainAllFalse(consistentValue)) {
+						mcses.add(subsetM);
+					}
 				}
+
 			}
 
 			System.out.println("MCSes size: " + mcses.size());
